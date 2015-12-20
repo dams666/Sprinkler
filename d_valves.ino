@@ -1,4 +1,4 @@
-
+  
   void changeValveState()
   {       
     if (moistureSensorState[numValveToInspect]) // activation du moisture sensor
@@ -26,27 +26,29 @@
       if (valveState[numValveToInspect]) 
       {
         
-        DEBUG_PRINT(" => CLOSE VALVE ");
-        DEBUG_PRINTLN(numValveToInspect);
-
         if (getNbValvesOpened() == 1)
         {
           programState = CLOSING_MAIN_VALVE;
 
+          DEBUG_PRINTLN(" => CLOSE MAIN VALVE ");
           digitalWrite(mainValvePin, HIGH); // fermeture de la vanne principale
-          delay(2000); // on lasse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
 
+          // on laisse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
+          while(calcFlowStats() != WATER_STOPPED)
+          {
+            delay(1000);
+          }
         }
 
+        DEBUG_PRINT(" => CLOSE VALVE ");
+        DEBUG_PRINTLN(numValveToInspect);
+        
         // fermeture de la vanne         
         digitalWrite(valvePins[numValveToInspect], RELAY_OFF);
 
         valveState[numValveToInspect] = 0;
-        
-        calcFlowStats();
 
-        delay(200);
-
+         delay(200);
       } 
     }   
 

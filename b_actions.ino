@@ -1,5 +1,11 @@
   
-#define NB_VALVES 6
+#define NB_VALVES 5
+
+  enum  waterFlow {
+    WATER_FLOWING,
+    WATER_STOPPED,
+    WATER_OVERFLOW
+  } ;
   
   //------------------------------------------------------------------------------------
   // PINS
@@ -198,9 +204,7 @@
     // détection de changement d'état du moisture sensor
     if (moistureSensorState[numValveToInspect] != prevMoistureSensorState[numValveToInspect]) 
     {
-
-      DEBUG_PRINTLN(getMoistureSensorsState());
-
+      //DEBUG_PRINTLN(getMoistureSensorsState());
 
       changeValveState();
     }
@@ -212,8 +216,24 @@
 
     if (valveState[numValveToInspect]) 
     {
-      if (calcFlowStats() == -1)
-        return;
+      switch(calcFlowStats())
+      {
+        case WATER_OVERFLOW:
+          msg = "Too much water for valve ";
+          msg+= numValveToInspect;
+          programState = ALERT;
+          return;
+        break;
+        case WATER_STOPPED:
+          if ( 15000 < (millis() - flowStatsOldTime ))
+          {
+            msg = "No water for valve ";
+            msg+= numValveToInspect;
+            programState = ALERT;
+            return;
+          }
+        break;
+      }
     }
 
     prevMoistureSensorState[numValveToInspect] = moistureSensorState[numValveToInspect];
@@ -232,12 +252,11 @@
     {
       digitalWrite(moistureSensorActivationPin, LOW);
 
-      
       DEBUG_PRINTLN("SLEEPING FOR A FEW MINUTES");
       
       programState = ACTIVATING_MOISTURE_SENSORS;
       // la valve est fermÃ©e, le tx d'humiditÃ© varie lentement, on peut allonger la durÃ©e entre deux mesures
-      delay(5000);
+      delay(60000);
 
       return;
     }            

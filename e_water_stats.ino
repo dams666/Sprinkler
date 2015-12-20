@@ -1,5 +1,7 @@
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
-  // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
+// ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
+// 0 : l'eau coule
+// 
   int calcFlowStats() 
   {
     unsigned long newTime = millis();
@@ -14,7 +16,7 @@
       // based on the number of pulses per second per units of measure (litres/minute in
       // this case) coming from the sensor.
 
-      DEBUG_PRINTLN(flowPulseCount);
+      //DEBUG_PRINTLN(flowPulseCount);
       
       float flowRate = ((1000.0f / (newTime - flowStatsOldTime)) * flowPulseCount) / flowSensorCalibrationFactor;
      
@@ -26,46 +28,6 @@
       // Add the millilitres passed in this second to the cumulative total
       totalMilliLitres[numValveToInspect] += flowMilliLitres;
 
-      // détection d'incohérences
-      
-      int diffMillilitres = totalMilliLitres[numValveToInspect] - lastTotalMilliLitres[numValveToInspect];
-
-      DEBUG_PRINT("diff:");
-      DEBUG_PRINTLN(diffMillilitres);
- 
-      if (diffMillilitres > 0)
-      {
-        if ( diffMillilitres > 1000 )
-        {
-          msg = "Too much water for valve ";
-          msg+= numValveToInspect;
-          programState = ALERT;
-          return -1;
-        }
-        
-        // Note the time this processing pass was executed. Note that because we've
-        // disabled interrupts the millis() function won't actually be incrementing right
-        // at this point, but it will still return the value it was set to just before
-        // interrupts went away.
-        flowStatsOldTime = newTime;        
-        
-      } else {
-
-        DEBUG_PRINTLN(newTime - flowStatsOldTime);
-          
-        if ( 15000 < (newTime - flowStatsOldTime ) )
-        {
-          msg = "No water for valve ";
-          msg+= numValveToInspect;
-          programState = ALERT;
-          return -1;
-        } 
-      }
-      
-      // Reset the pulse counter so we can start incrementing again
-      flowPulseCount = 0;
-      lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
- 
       unsigned int frac;
 
 #ifdef WITH_SERIAL  
@@ -94,7 +56,34 @@
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
     attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
-    return 0;
+
+      //DEBUG_PRINT("diff:");
+      //DEBUG_PRINTLN(diffMillilitres);
+
+      // détection d'incohérences
+      
+      int diffMillilitres = totalMilliLitres[numValveToInspect] - lastTotalMilliLitres[numValveToInspect];
+
+      // Reset the pulse counter so we can start incrementing again
+      flowPulseCount = 0;
+      lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
+      
+      if (diffMillilitres > 0)
+      {
+        if ( diffMillilitres > 1000 )          
+          return WATER_OVERFLOW;
+        
+        // Note the time this processing pass was executed. Note that because we've
+        // disabled interrupts the millis() function won't actually be incrementing right
+        // at this point, but it will still return the value it was set to just before
+        // interrupts went away.
+        flowStatsOldTime = newTime;        
+    
+        return WATER_FLOWING;
+        
+      } else {
+        return WATER_STOPPED;
+      }
   }
 
 
