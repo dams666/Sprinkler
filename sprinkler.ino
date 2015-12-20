@@ -1,7 +1,12 @@
 
 #define WITH_SERIAL
+//#undef WITH_SERIAL
 
 #define NB_VALVES 6
+
+#define RELAY_OFF HIGH
+#define RELAY_ON LOW
+  
 
 byte statusLed    = 13;
 
