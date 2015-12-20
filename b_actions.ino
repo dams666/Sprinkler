@@ -1,4 +1,6 @@
-
+  
+#define NB_VALVES 6
+  
   //------------------------------------------------------------------------------------
   // PINS
   //------------------------------------------------------------------------------------
@@ -17,8 +19,6 @@
   //------------------------------------------------------------------------------------
   // VALVES VARIABLES
   //------------------------------------------------------------------------------------
-
-  int valveCount;
 
   int valveState[NB_VALVES];
 
@@ -59,6 +59,8 @@
 
   void initSprinkler()
   {
+    DEBUG_PRINTLN("--- STARTING SPRINKLER ---");
+       
     //------------------------------------------------------------------------------------
     // DEFINE PINS
     //------------------------------------------------------------------------------------
@@ -67,18 +69,18 @@
     moistureSensorActivationPin = 32;  
 
     valvePins[0] = 51;
-    valvePins[1] = 49;
-    valvePins[2] = 47;
-    valvePins[3] = 45;
-    valvePins[4] = 43;
-    valvePins[5] = 41;
+    if (NB_VALVES > 1) valvePins[1] = 49;
+    if (NB_VALVES > 2) valvePins[2] = 47;
+    if (NB_VALVES > 3) valvePins[3] = 45;
+    if (NB_VALVES > 4) valvePins[4] = 43;
+    if (NB_VALVES > 5) valvePins[5] = 41;
 
     moistureSensorPins[0] = 52;
-    moistureSensorPins[1] = 50;
-    moistureSensorPins[2] = 48;
-    moistureSensorPins[3] = 46;
-    moistureSensorPins[4] = 44;
-    moistureSensorPins[5] = 42;
+    if (NB_VALVES > 1) moistureSensorPins[1] = 50;
+    if (NB_VALVES > 2) moistureSensorPins[2] = 48;
+    if (NB_VALVES > 3) moistureSensorPins[3] = 46;
+    if (NB_VALVES > 4) moistureSensorPins[4] = 44;
+    if (NB_VALVES > 5) moistureSensorPins[5] = 42;
 
     flowSensorInterrupt = 0;  // 0 = digital pin 2
     flowSensorPin       = 2; 
@@ -86,8 +88,6 @@
     //------------------------------------------------------------------------------------ 
     // DEFINE PROGRAM STATE
     //------------------------------------------------------------------------------------
-
-    programState = INITIALIZING;
 
     for (int ii = 0; ii< NB_VALVES; ++ii)
     {
@@ -99,8 +99,7 @@
     //------------------------------------------------------------------------------------
     // DEFINE VALVES VARIABLES
     //------------------------------------------------------------------------------------
-
-    valveCount          = 5; 
+ 
     numValveToInspect   = 0;
     maxValvesOpened     = 1;
 
@@ -123,7 +122,8 @@
       flowPulseCount[ii]         = 0;
     }
 
-
+    DEBUG_PRINTLN("VARIABLES INITIALIZATION : OK");
+    
     //------------------------------------------------------------------------------------
     // INIT PINS
     //------------------------------------------------------------------------------------
@@ -133,7 +133,7 @@
 
     // the array elements are numbered from 0 to (pinCount - 1).
     // use a for loop to initialize each pin as an output:
-    for (int thisPin = 0; thisPin < valveCount; thisPin++)
+    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
     {
       pinMode(moistureSensorPins[thisPin], INPUT);
       pinMode(valvePins[thisPin], OUTPUT);
@@ -151,23 +151,24 @@
     // state to LOW state)
     attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
 
+    DEBUG_PRINTLN("PINS : OK");
+
+    programState = INITIALIZING;
   }
 
   void alertAction()
   {
     
-#ifdef WITH_SERIAL
-      Serial.print("ALERT : ");
-      Serial.println(msg);
-#endif
-    
+    DEBUG_PRINT("ALERT : ");
+    DEBUG_PRINTLN(msg);
+
     digitalWrite(statusLed, HIGH);  // We have an active-low LED attached
     
     digitalWrite(mainValvePin, HIGH); // fermeture de la valve
     
     delay(2000);
     
-    for (int thisPin = 0; thisPin < valveCount; thisPin++)
+    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
     {
       digitalWrite(valvePins[thisPin], RELAY_OFF); // fermeture de la valve
     }    
@@ -182,16 +183,10 @@
   void initializeAction()
   {
     
-#ifdef WITH_SERIAL
-      Serial.println("INITIALIZING");
-#endif
-
     digitalWrite(valvePins[0], RELAY_ON); // activation de la valve
-    digitalWrite(valvePins[1], RELAY_ON); // activation de la valve
     delay(500);
 
-    digitalWrite(valvePins[0], RELAY_OFF); // fermeture de la valve
-    digitalWrite(valvePins[1], RELAY_OFF); // fermeture de la valve      
+    digitalWrite(valvePins[0], RELAY_OFF); // fermeture de la valve   
     delay(500);
 
     programState = ACTIVATING_MOISTURE_SENSORS;
@@ -202,9 +197,9 @@
     // détection de changement d'état du moisture sensor
     if (moistureSensorState[numValveToInspect] != prevMoistureSensorState[numValveToInspect]) 
     {
-#ifdef WITH_SERIAL
-      Serial.println(getMoistureSensorsState());
-#endif
+
+      DEBUG_PRINTLN(getMoistureSensorsState());
+
 
       changeValveState();
     }
@@ -224,7 +219,7 @@
     ++numValveToInspect;
 
     // on doit détecter les changements sur les autres vannes
-    if (numValveToInspect < valveCount )
+    if (numValveToInspect < NB_VALVES )
     {
       programState = INSPECTING_FOR_CHANGES;
       return;
@@ -236,10 +231,9 @@
     {
       digitalWrite(moistureSensorActivationPin, LOW);
 
-      #ifdef WITH_SERIAL
-            Serial.println("SLEEPING FOR A FEW MINUTES");
-      #endif
-
+      
+      DEBUG_PRINTLN("SLEEPING FOR A FEW MINUTES");
+      
       programState = ACTIVATING_MOISTURE_SENSORS;
       // la valve est fermÃ©e, le tx d'humiditÃ© varie lentement, on peut allonger la durÃ©e entre deux mesures
       delay(5000);
@@ -265,14 +259,12 @@
   
   void readMoistSensorsAction()
   {
-    for (int thisPin = 0; thisPin < valveCount; thisPin++)
+    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
     {
       moistureSensorState[thisPin] = digitalRead(moistureSensorPins[thisPin]);
     }
     programState = INSPECTING_FOR_CHANGES;
   }
-
-
 
 
 

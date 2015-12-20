@@ -26,7 +26,10 @@
       // détection d'incohérences
       
       int diffMillilitres = totalMilliLitres[numValveToInspect] - lastTotalMilliLitres[numValveToInspect];
-      
+
+      //DEBUG_PRINT("diff:");
+      //DEBUG_PRINTLN(diffMillilitres);
+ 
       if (diffMillilitres > 0)
       {
         if ( diffMillilitres > 1000 )
@@ -45,6 +48,8 @@
         
       } else {
 
+        //DEBUG_PRINTLN(newTime - flowStatsOldTime[numValveToInspect]);
+          
         if ( 15000 < (newTime - flowStatsOldTime[numValveToInspect] ) )
         {
           msg = "No water for valve ";
@@ -56,7 +61,7 @@
       
       // Reset the pulse counter so we can start incrementing again
       flowPulseCount[numValveToInspect] = 0;
-  
+      lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
  
       unsigned int frac;
 
@@ -78,7 +83,7 @@
       Serial.print("  Output Liquid Quantity: ");             // Output separator
       Serial.print(totalMilliLitres[numValveToInspect]);
       Serial.println("mL"); 
-
+      delay(40);
 #endif
       
       // Enable the interrupt again now that we've finished sending output

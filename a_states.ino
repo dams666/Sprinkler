@@ -1,4 +1,5 @@
- //------------------------------------------------------------------------------------
+
+  //------------------------------------------------------------------------------------
   // PROGRAM STATE
   //------------------------------------------------------------------------------------
 
@@ -70,21 +71,22 @@
    
    */
 
+
   void action()
-  {  
+  {        
       switch (programState)
       {
       case INITIALIZING:
-  
+
+        DEBUG_PRINTLN("--- INITIALIZING --- ");
+        
         initializeAction();
         break;
   
       case ACTIVATING_MOISTURE_SENSORS:
   
-  #ifdef WITH_SERIAL
-        Serial.println("ACTIVATING MOISTURE SENSORS");
-  #endif
-  
+        DEBUG_PRINTLN("--- ACTIVATING MOISTURE SENSORS ---");
+   
         activateMoistSensorsAction();
         break;
   
@@ -99,12 +101,11 @@
         inspectForChangesAction();
         break;
   
-      case ALERT:
+      default:
       
         alertAction();
         break;
       }
 
   }
-
 

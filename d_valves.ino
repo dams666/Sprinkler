@@ -7,17 +7,13 @@
       {
         programState = INSPECTING_FOR_CHANGES;
 
-        msg = " => OPEN VALVE ";
-        msg+= numValveToInspect;
-
+        DEBUG_PRINT(" => OPEN VALVE ");
+        DEBUG_PRINTLN(numValveToInspect);
+        
         digitalWrite(valvePins[numValveToInspect], RELAY_ON); // activation de la valve
         valveState[numValveToInspect] = 1;
         // initialisation des statistiques de consommation d'eau;
         flowStatsOldTime[numValveToInspect] = millis();
-        
-#ifdef WITH_SERIAL  
-        Serial.println(msg);
-#endif
 
         delay(200);
 
@@ -29,8 +25,9 @@
 
       if (valveState[numValveToInspect]) 
       {
-        msg = " => CLOSE VALVE ";
-        msg+= numValveToInspect;
+        
+        DEBUG_PRINT(" => CLOSE VALVE ");
+        DEBUG_PRINTLN(numValveToInspect);
 
         if (getNbValvesOpened() == 1)
         {
@@ -46,11 +43,6 @@
         valveState[numValveToInspect] = 0;
         
         flowStatsOldTime[numValveToInspect] = millis();
-        //lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
-                
-#ifdef WITH_SERIAL  
-        Serial.println(msg);
-#endif
 
         calcFlowStats();
 
@@ -65,7 +57,7 @@
   int  getNbValvesOpened()
   {
     int res = 0;
-    for (int thisPin = 0; thisPin < valveCount; thisPin++)
+    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
       res +=valveState[thisPin];
 
     return res;
