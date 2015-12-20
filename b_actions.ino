@@ -39,12 +39,12 @@
   //------------------------------------------------------------------------------------
 
   float flowSensorCalibrationFactor;
-  volatile byte flowPulseCount[NB_VALVES];  
+  volatile byte flowPulseCount;  
 
   unsigned long totalMilliLitres[NB_VALVES];
   unsigned long lastTotalMilliLitres[NB_VALVES];
   
-  unsigned long flowStatsOldTime[NB_VALVES];
+  unsigned long flowStatsOldTime;
   
   int incoherentPulseCount;
   unsigned long lastIncoherentPulseCountTime;
@@ -113,13 +113,14 @@
 
     incoherentPulseCount = 0;
     lastIncoherentPulseCountTime = 0;
+
+    flowPulseCount = 0;
+    flowStatsOldTime = 0;
     
     for (int ii = 0; ii< NB_VALVES; ++ii)
     {
       totalMilliLitres[ii]       = 0;
       lastTotalMilliLitres[ii]   = 0;
-      flowStatsOldTime[ii]       = 0;
-      flowPulseCount[ii]         = 0;
     }
 
     DEBUG_PRINTLN("VARIABLES INITIALIZATION : OK");

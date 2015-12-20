@@ -13,7 +13,7 @@
         digitalWrite(valvePins[numValveToInspect], RELAY_ON); // activation de la valve
         valveState[numValveToInspect] = 1;
         // initialisation des statistiques de consommation d'eau;
-        flowStatsOldTime[numValveToInspect] = millis();
+        flowStatsOldTime = millis();
 
         delay(200);
 
@@ -35,6 +35,7 @@
 
           digitalWrite(mainValvePin, HIGH); // fermeture de la vanne principale
           delay(2000); // on lasse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
+
         }
 
         // fermeture de la vanne         
@@ -42,8 +43,6 @@
 
         valveState[numValveToInspect] = 0;
         
-        flowStatsOldTime[numValveToInspect] = millis();
-
         calcFlowStats();
 
         delay(200);

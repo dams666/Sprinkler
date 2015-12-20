@@ -13,7 +13,10 @@
       // that to scale the output. We also apply the flowSensorCalibrationFactor to scale the output
       // based on the number of pulses per second per units of measure (litres/minute in
       // this case) coming from the sensor.
-      float flowRate = ((1000.0f / (newTime - flowStatsOldTime[numValveToInspect])) * flowPulseCount[numValveToInspect]) / flowSensorCalibrationFactor;
+
+      DEBUG_PRINTLN(flowPulseCount);
+      
+      float flowRate = ((1000.0f / (newTime - flowStatsOldTime)) * flowPulseCount) / flowSensorCalibrationFactor;
      
       // Divide the flow rate in litres/minute by 60 to determine how many litres have
       // passed through the sensor in this 1 second interval, then multiply by 1000 to
@@ -27,8 +30,8 @@
       
       int diffMillilitres = totalMilliLitres[numValveToInspect] - lastTotalMilliLitres[numValveToInspect];
 
-      //DEBUG_PRINT("diff:");
-      //DEBUG_PRINTLN(diffMillilitres);
+      DEBUG_PRINT("diff:");
+      DEBUG_PRINTLN(diffMillilitres);
  
       if (diffMillilitres > 0)
       {
@@ -44,13 +47,13 @@
         // disabled interrupts the millis() function won't actually be incrementing right
         // at this point, but it will still return the value it was set to just before
         // interrupts went away.
-        flowStatsOldTime[numValveToInspect] = newTime;        
+        flowStatsOldTime = newTime;        
         
       } else {
 
-        //DEBUG_PRINTLN(newTime - flowStatsOldTime[numValveToInspect]);
+        DEBUG_PRINTLN(newTime - flowStatsOldTime);
           
-        if ( 15000 < (newTime - flowStatsOldTime[numValveToInspect] ) )
+        if ( 15000 < (newTime - flowStatsOldTime ) )
         {
           msg = "No water for valve ";
           msg+= numValveToInspect;
@@ -60,7 +63,7 @@
       }
       
       // Reset the pulse counter so we can start incrementing again
-      flowPulseCount[numValveToInspect] = 0;
+      flowPulseCount = 0;
       lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
  
       unsigned int frac;
@@ -100,7 +103,6 @@
    */
   void flowIncPulseCounter()
   {
-    
     if (getNbValvesOpened() == 0 && programState != CLOSING_MAIN_VALVE)
     {
       if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
@@ -121,7 +123,7 @@
     } 
 
     // Increment the pulse counter
-    flowPulseCount[numValveToInspect]++;
+    flowPulseCount++;
 
   }
 
