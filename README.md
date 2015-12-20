@@ -1,10 +1,11 @@
 # Sprinkler
 Sprinkler est un projet open source d'arrosage intelligent pour son jardin d'intérieur.
+
 Fonctionnalités:
 - controle plusieurs vannes
 - possède des capteurs d'humidité
 - statistiques de consommation d'eau
-- détection d'anomalites de fonctionnement (fuites, consommation d'eau excessive...)
+- détection d'anomalies de fonctionnement (fuites, consommation d'eau excessive...)
 - piloté par un arduino Mega
 
 
