@@ -14,7 +14,8 @@
         valveState[numValveToInspect] = 1;
         // initialisation des statistiques de consommation d'eau;
         flowStatsOldTime = millis();
-
+        nbWaterings[numValveToInspect]++;
+        
         delay(200);
 
         digitalWrite(mainValvePin, LOW); // activation de la valve principale
@@ -27,19 +28,8 @@
       {
         
         if (getNbValvesOpened() == 1)
-        {
-          programState = CLOSING_MAIN_VALVE;
-
-          DEBUG_PRINTLN(" => CLOSE MAIN VALVE ");
-          digitalWrite(mainValvePin, HIGH); // fermeture de la vanne principale
-
-          // on laisse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
-          while(calcFlowStats() != WATER_STOPPED)
-          {
-            delay(1000);
-          }
-        }
-
+          closeMainValve();
+ 
         DEBUG_PRINT(" => CLOSE VALVE ");
         DEBUG_PRINTLN(numValveToInspect);
         
@@ -63,3 +53,18 @@
 
     return res;
   }
+
+  void closeMainValve()
+  {
+    programState = CLOSING_MAIN_VALVE;
+
+    DEBUG_PRINTLN(" => CLOSE MAIN VALVE ");
+    digitalWrite(mainValvePin, RELAY_OFF); // fermeture de la vanne principale
+
+    // on laisse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
+    while(calcFlowStats() != WATER_STOPPED)
+      delay(500);
+    DEBUG_PRINTLN(" WATER STOPPED");  
+  }
+ 
+

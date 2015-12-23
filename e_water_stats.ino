@@ -70,7 +70,7 @@
       
       if (diffMillilitres > 0)
       {
-        if ( diffMillilitres > 1000 )          
+        if ( diffMillilitres > MAX_LILILITRES_PER_VALVE )          
           return WATER_OVERFLOW;
         
         // Note the time this processing pass was executed. Note that because we've

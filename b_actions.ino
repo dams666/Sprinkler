@@ -1,5 +1,6 @@
   
 #define NB_VALVES 5
+#define MAX_LILILITRES_PER_VALVE 1000
 
   enum  waterFlow {
     WATER_FLOWING,
@@ -49,6 +50,7 @@
 
   unsigned long totalMilliLitres[NB_VALVES];
   unsigned long lastTotalMilliLitres[NB_VALVES];
+  unsigned long nbWaterings[NB_VALVES];
   
   unsigned long flowStatsOldTime;
   
@@ -127,6 +129,7 @@
     {
       totalMilliLitres[ii]       = 0;
       lastTotalMilliLitres[ii]   = 0;
+      nbWaterings[ii]            = 0;
     }
 
     DEBUG_PRINTLN("VARIABLES INITIALIZATION : OK");
@@ -169,11 +172,7 @@
     DEBUG_PRINT("ALERT : ");
     DEBUG_PRINTLN(msg);
 
-    digitalWrite(statusLed, HIGH);  // We have an active-low LED attached
-    
-    digitalWrite(mainValvePin, HIGH); // fermeture de la valve
-    
-    delay(2000);
+    closeMainValve();
     
     for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
     {
@@ -184,7 +183,11 @@
     
     // Disable the interrupt while calculating flow rate and sending the value to the host
     detachInterrupt(flowSensorInterrupt);
-    
+
+
+    digitalWrite(statusLed, HIGH);  // We have an active-low LED attached
+    delay(500);
+    digitalWrite(statusLed, LOW);  // We have an active-low LED attached
   }
   
   void initializeAction()
@@ -225,7 +228,7 @@
           return;
         break;
         case WATER_STOPPED:
-          if ( 15000 < (millis() - flowStatsOldTime ))
+          if ( 4000 < (millis() - flowStatsOldTime ))
           {
             msg = "No water for valve ";
             msg+= numValveToInspect;
