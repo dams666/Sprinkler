@@ -1,3 +1,66 @@
+void initWaterStats() 
+{
+    flowSensorInterrupt = 0;  // 0 = digital pin 2
+    flowSensorPin       = 2; 
+    
+    // The hall-effect flow sensor outputs approximately 71 pulses per second per
+    // litre/minute of flow.
+    flowSensorCalibrationFactor = 71.0f;
+
+    incoherentPulseCount = 0;
+    lastIncoherentPulseCountTime = 0;
+
+    flowPulseCount = 0;
+    flowStatsOldTime = 0;
+    
+    for (int ii = 0; ii< NB_VALVES; ++ii)
+    {
+      totalMililitresSession[ii]       = 0;
+      lastTotalMililitresSession[ii]   = 0;
+
+      totalMililitres[ii]              = 0;
+      nbWaterings[ii]                  = 0;
+    }
+
+    pinMode(flowSensorPin, INPUT);
+    digitalWrite(flowSensorPin, HIGH);
+
+    // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
+    // Configured to trigger on a FALLING state change (transition from HIGH
+    // state to LOW state)
+    attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
+}
+
+
+void resetWaterStats() 
+{
+  // init water consumption statistics
+  totalMililitresSession[numValveToInspect] = 0;
+  lastTotalMililitresSession[numValveToInspect] = 0;
+        
+  nbWaterings[numValveToInspect]++;
+}
+
+void showWaterStats()
+{
+  String s;
+  s = "-Water used: ";
+  s+= totalMililitresSession[numValveToInspect];
+  s+= " ml";
+   
+  lcd.setCursor(0,1); //Start at character 4 on line 0
+  lcd.print(s);
+
+  delay(100);
+  
+  s = "-Total: ";
+  s+= totalMililitres[numValveToInspect];
+  s+= " ml";
+
+  lcd.setCursor(0,2); //Start at character 4 on line 0
+  lcd.print(s);
+}
+
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
 // 0 : l'eau coule
@@ -26,8 +89,8 @@
       unsigned int flowMilliLitres = (flowRate / 60) * 1000;
 
       // Add the millilitres passed in this second to the cumulative total
-      totalMilliLitres[numValveToInspect] += flowMilliLitres;
-
+      totalMililitresSession[numValveToInspect] += flowMilliLitres;
+      totalMililitres[numValveToInspect] += flowMilliLitres;
       unsigned int frac;
 
 #ifdef WITH_SERIAL  
@@ -46,7 +109,7 @@
 
       // Print the cumulative total of litres flowed since starting
       Serial.print("  Output Liquid Quantity: ");             // Output separator
-      Serial.print(totalMilliLitres[numValveToInspect]);
+      Serial.print(lastTotalMililitresSession[numValveToInspect]);
       Serial.println("mL"); 
       delay(40);
 #endif
@@ -62,11 +125,11 @@
 
       // détection d'incohérences
       
-      int diffMillilitres = totalMilliLitres[numValveToInspect] - lastTotalMilliLitres[numValveToInspect];
+      int diffMillilitres = totalMililitresSession[numValveToInspect] - lastTotalMililitresSession[numValveToInspect];
 
       // Reset the pulse counter so we can start incrementing again
       flowPulseCount = 0;
-      lastTotalMilliLitres[numValveToInspect] = totalMilliLitres[numValveToInspect];
+      lastTotalMililitresSession[numValveToInspect] = totalMililitresSession[numValveToInspect];
       
       if (diffMillilitres > 0)
       {

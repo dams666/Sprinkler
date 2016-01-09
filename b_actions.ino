@@ -1,6 +1,7 @@
   
-#define NB_VALVES 5
-#define MAX_LILILITRES_PER_VALVE 1000
+#define NB_VALVES                 1
+#define MAX_LILILITRES_PER_VALVE  1000
+#define SLEEPING_DURATION         60000
 
   enum  waterFlow {
     WATER_FLOWING,
@@ -15,7 +16,8 @@
   int mainValvePin;
 
   int valvePins[NB_VALVES];
-
+  int fertilizerValvePin;
+  
   int moistureSensorPins[NB_VALVES];
 
   int moistureSensorActivationPin;
@@ -40,7 +42,6 @@
   int moistureSensorState[NB_VALVES];        // current moistureSensorState of the machine
   int prevMoistureSensorState[NB_VALVES];         // previous moistureSensorState of the machine
 
- 
   //------------------------------------------------------------------------------------
   // WATER CONSUMTION STATS
   //------------------------------------------------------------------------------------
@@ -48,8 +49,10 @@
   float flowSensorCalibrationFactor;
   volatile byte flowPulseCount;  
 
-  unsigned long totalMilliLitres[NB_VALVES];
-  unsigned long lastTotalMilliLitres[NB_VALVES];
+  unsigned long totalMililitresSession[NB_VALVES];
+  unsigned long lastTotalMililitresSession[NB_VALVES];
+
+  unsigned long totalMililitres[NB_VALVES];
   unsigned long nbWaterings[NB_VALVES];
   
   unsigned long flowStatsOldTime;
@@ -63,141 +66,55 @@
 
   String msg;
 
-
-
   void initSprinkler()
   {
     DEBUG_PRINTLN("--- STARTING SPRINKLER ---");
-       
-    //------------------------------------------------------------------------------------
-    // DEFINE PINS
-    //------------------------------------------------------------------------------------
-
-    mainValvePin = 53;
-    moistureSensorActivationPin = 32;  
-
-    valvePins[0] = 51;
-    if (NB_VALVES > 1) valvePins[1] = 49;
-    if (NB_VALVES > 2) valvePins[2] = 47;
-    if (NB_VALVES > 3) valvePins[3] = 45;
-    if (NB_VALVES > 4) valvePins[4] = 43;
-    if (NB_VALVES > 5) valvePins[5] = 41;
-
-    moistureSensorPins[0] = 52;
-    if (NB_VALVES > 1) moistureSensorPins[1] = 50;
-    if (NB_VALVES > 2) moistureSensorPins[2] = 48;
-    if (NB_VALVES > 3) moistureSensorPins[3] = 46;
-    if (NB_VALVES > 4) moistureSensorPins[4] = 44;
-    if (NB_VALVES > 5) moistureSensorPins[5] = 42;
-
-    flowSensorInterrupt = 0;  // 0 = digital pin 2
-    flowSensorPin       = 2; 
+    
+    lcd.setCursor(2,0); //Start at character 4 on line 0
+    lcd.print("=== SPRINKLER ===");
+    lcd.setCursor(0,2);
+    lcd.print("Initializing...");
 
     //------------------------------------------------------------------------------------ 
-    // DEFINE PROGRAM STATE
+    // INIT MODULES
     //------------------------------------------------------------------------------------
 
-    for (int ii = 0; ii< NB_VALVES; ++ii)
-    {
-      valveState[ii]                = 0;
-      moistureSensorState[ii]       = 0;
-      prevMoistureSensorState[ii]   = 0;
-    }
+    initValves();
+    initMoistureSensors();
+    initWaterStats();
 
-    //------------------------------------------------------------------------------------
-    // DEFINE VALVES VARIABLES
-    //------------------------------------------------------------------------------------
- 
-    numValveToInspect   = 0;
-    maxValvesOpened     = 1;
-
-    //------------------------------------------------------------------------------------
-    // DEFINE FLOW SENSOR VARIABLES
-    //------------------------------------------------------------------------------------
-
-    // The hall-effect flow sensor outputs approximately 60 pulses per second per
-    // litre/minute of flow.
-    flowSensorCalibrationFactor = 60.0f;
-
-    incoherentPulseCount = 0;
-    lastIncoherentPulseCountTime = 0;
-
-    flowPulseCount = 0;
-    flowStatsOldTime = 0;
+    DEBUG_PRINTLN("INITIALIZATION : Done");
+   
+    lcd.setCursor(15,2); //Start at character 4 on line 0
+    lcd.print("Done");
     
-    for (int ii = 0; ii< NB_VALVES; ++ii)
-    {
-      totalMilliLitres[ii]       = 0;
-      lastTotalMilliLitres[ii]   = 0;
-      nbWaterings[ii]            = 0;
-    }
-
-    DEBUG_PRINTLN("VARIABLES INITIALIZATION : OK");
-    
-    //------------------------------------------------------------------------------------
-    // INIT PINS
-    //------------------------------------------------------------------------------------
-
-    pinMode(mainValvePin, OUTPUT);
-    pinMode(moistureSensorActivationPin, OUTPUT);
-
-    // the array elements are numbered from 0 to (pinCount - 1).
-    // use a for loop to initialize each pin as an output:
-    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
-    {
-      pinMode(moistureSensorPins[thisPin], INPUT);
-      pinMode(valvePins[thisPin], OUTPUT);
-
-      digitalWrite(valvePins[thisPin], RELAY_OFF);
-    }
-    digitalWrite(mainValvePin, HIGH);
-    digitalWrite(moistureSensorActivationPin, LOW);
-
-    pinMode(flowSensorPin, INPUT);
-    digitalWrite(flowSensorPin, HIGH);
-
-    // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
-    // Configured to trigger on a FALLING state change (transition from HIGH
-    // state to LOW state)
-    attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
-
-    DEBUG_PRINTLN("PINS : OK");
-
     programState = INITIALIZING;
+
+    delay(2000);
   }
 
   void alertAction()
   {
-    
+    closeAllValves();
+        
     DEBUG_PRINT("ALERT : ");
     DEBUG_PRINTLN(msg);
-
-    closeMainValve();
     
-    for (int thisPin = 0; thisPin < NB_VALVES; thisPin++)
+    while(true)
     {
-      digitalWrite(valvePins[thisPin], RELAY_OFF); // fermeture de la valve
-    }    
-    
-    digitalWrite(moistureSensorActivationPin, LOW);
-    
-    // Disable the interrupt while calculating flow rate and sending the value to the host
-    detachInterrupt(flowSensorInterrupt);
-
-
-    digitalWrite(statusLed, HIGH);  // We have an active-low LED attached
-    delay(500);
-    digitalWrite(statusLed, LOW);  // We have an active-low LED attached
+      lcd.clear();
+      delay(100);    
+      lcd.setCursor(3,0); //Start at character 4 on line 0
+      lcd.print("=== ALERT ! ===");
+      lcd.setCursor(0,2); //Start at character 4 on line 0
+      lcd.print(msg);
+      delay(1000);
+    }
   }
   
   void initializeAction()
   {
-    
-    digitalWrite(valvePins[0], RELAY_ON); // activation de la valve
-    delay(500);
-
-    digitalWrite(valvePins[0], RELAY_OFF); // fermeture de la valve   
-    delay(500);
+    purgeTransitionalCircuit();
 
     programState = ACTIVATING_MOISTURE_SENSORS;
   }
@@ -236,6 +153,13 @@
             return;
           }
         break;
+        case WATER_FLOWING:
+          lcd.setCursor(0,3);
+          String s;
+          s = "Flow: ";
+          s+= totalMililitresSession[numValveToInspect];
+          s+= " ml";
+          lcd.print(s);
       }
     }
 
@@ -255,11 +179,15 @@
     {
       digitalWrite(moistureSensorActivationPin, LOW);
 
+      delay(1000);
+      lcd.setCursor(0,3); //Start at character 4 on line 0
+      lcd.print("SLEEPING...");
+      
       DEBUG_PRINTLN("SLEEPING FOR A FEW MINUTES");
       
       programState = ACTIVATING_MOISTURE_SENSORS;
       // la valve est fermÃ©e, le tx d'humiditÃ© varie lentement, on peut allonger la durÃ©e entre deux mesures
-      delay(60000);
+      delay(SLEEPING_DURATION);
 
       return;
     }            
