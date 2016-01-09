@@ -22,6 +22,10 @@ void initWaterStats()
       nbWaterings[ii]                  = 0;
     }
 
+    EEPROM.get(eeAddress, totalMililitres);
+
+    
+
     pinMode(flowSensorPin, INPUT);
     digitalWrite(flowSensorPin, HIGH);
 
@@ -44,7 +48,7 @@ void resetWaterStats()
 void showWaterStats()
 {
   String s;
-  s = "-Water used: ";
+  s = "-Water used:";
   s+= totalMililitresSession[numValveToInspect];
   s+= " ml";
    
@@ -53,12 +57,14 @@ void showWaterStats()
 
   delay(100);
   
-  s = "-Total: ";
+  s = "-Total     :";
   s+= totalMililitres[numValveToInspect];
   s+= " ml";
 
   lcd.setCursor(0,2); //Start at character 4 on line 0
   lcd.print(s);
+
+  EEPROM.put(eeAddress, totalMililitres);
 }
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
@@ -91,6 +97,9 @@ void showWaterStats()
       // Add the millilitres passed in this second to the cumulative total
       totalMililitresSession[numValveToInspect] += flowMilliLitres;
       totalMililitres[numValveToInspect] += flowMilliLitres;
+      
+      EEPROM.put(eeAddress, totalMililitres);
+      
       unsigned int frac;
 
 #ifdef WITH_SERIAL  

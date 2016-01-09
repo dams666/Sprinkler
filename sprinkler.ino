@@ -4,6 +4,7 @@
 // Move any other LCD libraries to another folder or delete them
 // See Library "Docs" folder for possible commands etc.
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL

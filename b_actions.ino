@@ -8,6 +8,9 @@
     WATER_STOPPED,
     WATER_OVERFLOW
   } ;
+
+
+  int eeAddress = 0;   //EEPROM : Location we want the data to be put.
   
   //------------------------------------------------------------------------------------
   // PINS
