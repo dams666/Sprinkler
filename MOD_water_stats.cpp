@@ -1,5 +1,52 @@
-void initWaterStats() 
+#include "main.h"
+#include "MOD_water_stats.h"
+#include "MOD_valves.h"
+
+void globalFlowIncPulseCounter()
 {
+
+  if (__MOD_waterStats) 
+    __MOD_waterStats->flowIncPulseCounter();
+}
+
+  /*
+  Flow sensor Insterrupt Service Routine
+   */
+  void MOD_waterStats_::flowIncPulseCounter()
+  {
+
+    if (0 == flowPulseCount % 25)
+    { 
+      //LCD_PRINT(0,0,flowPulseCount);
+    }
+    
+    if (__MOD_valves->getNbValvesOpened() == 0 && __programState != PRGM_STATE_CLOSING_MAIN_VALVE)
+    {
+      if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
+      {
+         lastIncoherentPulseCountTime = millis();
+         incoherentPulseCount = 0;
+      }
+      
+      incoherentPulseCount++;
+      
+      if (incoherentPulseCount > 40)
+      {
+        (*__msg) = "water is flowing but MOD_valves are closed!"; 
+        __programState = PRGM_STATE_ALERT;
+         //alertAction();
+      }
+       
+    } 
+
+    // Increment the pulse counter
+    flowPulseCount++;
+
+  }
+
+
+MOD_waterStats_::MOD_waterStats_() 
+{   
     flowSensorInterrupt = 0;  // 0 = digital pin 2
     flowSensorPin       = 2; 
     
@@ -12,8 +59,13 @@ void initWaterStats()
 
     flowPulseCount = 0;
     flowStatsOldTime = 0;
+
+    totalMililitresSession      = new unsigned long[__nbChannels];
+    lastTotalMililitresSession  = new unsigned long[__nbChannels];
+    totalMililitres             = new unsigned long[__nbChannels];
+    nbWaterings                 = new unsigned long[__nbChannels];
     
-    for (int ii = 0; ii< NB_VALVES; ++ii)
+    for (int ii = 0; ii< __nbChannels; ++ii)
     {
       totalMililitresSession[ii]       = 0;
       lastTotalMililitresSession[ii]   = 0;
@@ -21,10 +73,8 @@ void initWaterStats()
       totalMililitres[ii]              = 0;
       nbWaterings[ii]                  = 0;
     }
-
-    EEPROM.get(eeAddress, totalMililitres);
-
-    
+    //EEPROM.put(__eeAddress, totalMililitres);
+    EEPROM.get(__eeAddress, totalMililitres);
 
     pinMode(flowSensorPin, INPUT);
     digitalWrite(flowSensorPin, HIGH);
@@ -32,46 +82,62 @@ void initWaterStats()
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
+    attachInterrupt(flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
 }
 
 
-void resetWaterStats() 
+void MOD_waterStats_::reset() 
 {
   // init water consumption statistics
-  totalMililitresSession[numValveToInspect] = 0;
-  lastTotalMililitresSession[numValveToInspect] = 0;
+  totalMililitresSession[__curChannel] = 0;
+  lastTotalMililitresSession[__curChannel] = 0;
         
-  nbWaterings[numValveToInspect]++;
+  nbWaterings[__curChannel]++;
+
+  flowStatsOldTime = millis();
 }
 
-void showWaterStats()
+void MOD_waterStats_::show()
 {
+  __LCD->clear();
+  LCD_PRINT(0,0, " == STATISTICS == ");
+  
   String s;
   s = "-Water used:";
-  s+= totalMililitresSession[numValveToInspect];
+  s+= totalMililitresSession[__curChannel];
   s+= " ml";
-   
-  lcd.setCursor(0,1); //Start at character 4 on line 0
-  lcd.print(s);
 
-  delay(100);
-  
+  LCD_PRINT(0,1, s);
+    
   s = "-Total     :";
-  s+= totalMililitres[numValveToInspect];
+  s+= totalMililitres[__curChannel];
   s+= " ml";
 
-  lcd.setCursor(0,2); //Start at character 4 on line 0
-  lcd.print(s);
+  LCD_PRINT(0,2, s);
 
-  EEPROM.put(eeAddress, totalMililitres);
+  EEPROM.put(__eeAddress, totalMililitres);
 }
+
+void MOD_waterStats_::printFlow() 
+{
+   String s;
+   s = "-Flow: ";
+   s+= totalMililitresSession[__curChannel];
+   s+= " ml";
+
+   LCD_PRINT(0,3, s);
+}
+
+bool MOD_waterStats_::isWaterClosed() const
+{
+  return (waterFlow == WATER_STOPPED) && (4000 < (millis() - flowStatsOldTime));
+} 
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
 // 0 : l'eau coule
 // 
-  int calcFlowStats() 
+  int MOD_waterStats_::calcFlow() 
   {
     unsigned long newTime = millis();
 
@@ -95,10 +161,10 @@ void showWaterStats()
       unsigned int flowMilliLitres = (flowRate / 60) * 1000;
 
       // Add the millilitres passed in this second to the cumulative total
-      totalMililitresSession[numValveToInspect] += flowMilliLitres;
-      totalMililitres[numValveToInspect] += flowMilliLitres;
+      totalMililitresSession[__curChannel] += flowMilliLitres;
+      totalMililitres[__curChannel] += flowMilliLitres;
       
-      EEPROM.put(eeAddress, totalMililitres);
+      EEPROM.put(__eeAddress, totalMililitres);
       
       unsigned int frac;
 
@@ -118,73 +184,48 @@ void showWaterStats()
 
       // Print the cumulative total of litres flowed since starting
       Serial.print("  Output Liquid Quantity: ");             // Output separator
-      Serial.print(lastTotalMililitresSession[numValveToInspect]);
+      Serial.print(lastTotalMililitresSession[__curChannel]);
       Serial.println("mL"); 
       delay(40);
 #endif
       
-      // Enable the interrupt again now that we've finished sending output
+    // Enable the interrupt again now that we've finished sending output
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    attachInterrupt(flowSensorInterrupt, flowIncPulseCounter, FALLING);
-
+    attachInterrupt(__MOD_waterStats->flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
+    
       //DEBUG_PRINT("diff:");
       //DEBUG_PRINTLN(diffMillilitres);
 
       // détection d'incohérences
       
-      int diffMillilitres = totalMililitresSession[numValveToInspect] - lastTotalMililitresSession[numValveToInspect];
+      int diffMillilitres = totalMililitresSession[__curChannel] - lastTotalMililitresSession[__curChannel];
 
       // Reset the pulse counter so we can start incrementing again
       flowPulseCount = 0;
-      lastTotalMililitresSession[numValveToInspect] = totalMililitresSession[numValveToInspect];
-      
+      lastTotalMililitresSession[__curChannel] = totalMililitresSession[__curChannel];
+       
       if (diffMillilitres > 0)
       {
-        if ( diffMillilitres > MAX_LILILITRES_PER_VALVE )          
-          return WATER_OVERFLOW;
+        if ( diffMillilitres > MAX_MILILITRES_PER_VALVE )
+        {          
+          waterFlow = WATER_OVERFLOW;
+          return waterFlow;
+        }
         
         // Note the time this processing pass was executed. Note that because we've
         // disabled interrupts the millis() function won't actually be incrementing right
         // at this point, but it will still return the value it was set to just before
         // interrupts went away.
         flowStatsOldTime = newTime;        
-    
-        return WATER_FLOWING;
+
+        waterFlow = WATER_FLOWING;
+        return waterFlow;
         
       } else {
-        return WATER_STOPPED;
+
+        waterFlow = WATER_STOPPED;
+        return waterFlow;
       }
   }
-
-
-  /*
-  Flow sensor Insterrupt Service Routine
-   */
-  void flowIncPulseCounter()
-  {
-    if (getNbValvesOpened() == 0 && programState != CLOSING_MAIN_VALVE)
-    {
-      if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
-      {
-         lastIncoherentPulseCountTime = millis();
-         incoherentPulseCount = 0;
-      }
-      
-      incoherentPulseCount++;
-      
-      if (incoherentPulseCount > 40)
-      {
-        msg = "water is flowing but valves are closed!"; 
-        programState = ALERT;
-         alertAction();
-      }
-       
-    } 
-
-    // Increment the pulse counter
-    flowPulseCount++;
-
-  }
-
