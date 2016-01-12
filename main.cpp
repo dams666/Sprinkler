@@ -11,8 +11,9 @@ int __eeAddress;
 int __nbChannels;
 int __curChannel;
 
-String *__msg;
-    
+String *__msg1;
+String *__msg2;
+
 LiquidCrystal_I2C * __LCD;
 
 MOD_moistureSensors_ *  __MOD_moistureSensors;
@@ -39,7 +40,8 @@ MOD_valves_ *           __MOD_valves;
     __nbChannels = NB_VALVES;
     __curChannel = 0;
 
-    __msg = new String();
+    __msg1 = new String();
+    __msg2 = new String();
     
     __LCD = new LiquidCrystal_I2C (0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
 
@@ -68,15 +70,17 @@ MOD_valves_ *           __MOD_valves;
     __MOD_valves->closeAllValves();
         
     DEBUG_PRINT("ALERT : ");
-    DEBUG_PRINTLN(*__msg);
+    DEBUG_PRINTLN(*__msg1);
     
     while(true)
     {
       __LCD->clear();
       delay(100);    
       LCD_PRINT(3,0, "=== ALERT ! ===");
-      LCD_PRINT(0,2, *__msg);
 
+      LCD_PRINT(0,2, *__msg1);
+      if ((*__msg2) != "") LCD_PRINT(0,3, *__msg2);
+      
       delay(1000);
     }
   }
@@ -99,17 +103,19 @@ MOD_valves_ *           __MOD_valves;
       switch(__MOD_waterStats->calcFlow())
       {
         case WATER_OVERFLOW:
-          (*__msg) = "Valve ";
-          (*__msg) += (1 + __curChannel);
-          (*__msg) += ":Water overflow";
+          (*__msg1) = "Valve ";
+          (*__msg1) += (1 + __curChannel);
+          (*__msg1) += " : Water";
+          (*__msg2) = "overflow";
+          
           __programState = PRGM_STATE_ALERT;
           return;
         break;
         case WATER_BLOCKED:
-          (*__msg) = "Valve";
-          (*__msg) += (1 + __curChannel);
-          (*__msg) += __curChannel;
-          (*__msg) += ":No water";
+          (*__msg1) = "Valve ";
+          (*__msg1) += (1 + __curChannel);
+          (*__msg1) += " : No water";
+          (*__msg2) = "";
           __programState = PRGM_STATE_ALERT;
           return;
         break;

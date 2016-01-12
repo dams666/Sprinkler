@@ -1,7 +1,7 @@
 #ifndef __WATER_STATS_H__
 #define __WATER_STATS_H__
 
-#define MAX_MILILITRES_PER_VALVE  500
+#define MAX_MILILITRES_PER_VALVE  50
 
 #include <arduino.h>
 

@@ -21,7 +21,8 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
       
       if (incoherentPulseCount > 40)
       {
-        (*__msg) = "water is flowing but MOD_valves are closed!"; 
+        (*__msg1) = "water is flowing but";
+        (*__msg2) = "valves are closed!"; 
         __programState = PRGM_STATE_ALERT;
          //alertAction();
       }    

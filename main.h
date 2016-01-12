@@ -41,7 +41,8 @@ extern int __eeAddress;   //EEPROM : Location we want the data to be put.
 
 extern LiquidCrystal_I2C *__LCD;
   
-extern String* __msg;
+extern String* __msg1;
+extern String* __msg2;
 
 class MOD_moistureSensors_;
 class MOD_waterStats_;
