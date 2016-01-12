@@ -2,24 +2,13 @@
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
-void globalFlowIncPulseCounter()
-{
-
-  if (__MOD_waterStats) 
-    __MOD_waterStats->flowIncPulseCounter();
-}
+void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
   /*
   Flow sensor Insterrupt Service Routine
    */
   void MOD_waterStats_::flowIncPulseCounter()
-  {
-
-    if (0 == flowPulseCount % 25)
-    { 
-      //LCD_PRINT(0,0,flowPulseCount);
-    }
-    
+  { 
     if (__MOD_valves->getNbValvesOpened() == 0 && __programState != PRGM_STATE_CLOSING_MAIN_VALVE)
     {
       if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
@@ -35,8 +24,7 @@ void globalFlowIncPulseCounter()
         (*__msg) = "water is flowing but MOD_valves are closed!"; 
         __programState = PRGM_STATE_ALERT;
          //alertAction();
-      }
-       
+      }    
     } 
 
     // Increment the pulse counter
@@ -89,10 +77,9 @@ MOD_waterStats_::MOD_waterStats_()
 void MOD_waterStats_::reset() 
 {
   // init water consumption statistics
-  totalMililitresSession[__curChannel] = 0;
+  totalMililitresSession    [__curChannel] = 0;
   lastTotalMililitresSession[__curChannel] = 0;
-        
-  nbWaterings[__curChannel]++;
+  nbWaterings               [__curChannel]++;
 
   flowStatsOldTime = millis();
 }
@@ -128,15 +115,10 @@ void MOD_waterStats_::printFlow()
    LCD_PRINT(0,3, s);
 }
 
-bool MOD_waterStats_::isWaterClosed() const
-{
-  return (waterFlow == WATER_STOPPED) && (4000 < (millis() - flowStatsOldTime));
-} 
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
-// 0 : l'eau coule
-// 
+
   int MOD_waterStats_::calcFlow() 
   {
     unsigned long newTime = millis();
@@ -208,24 +190,25 @@ bool MOD_waterStats_::isWaterClosed() const
        
       if (diffMillilitres > 0)
       {
-        if ( diffMillilitres > MAX_MILILITRES_PER_VALVE )
-        {          
+        waterFlow = WATER_FLOWING;
+        
+        if ( totalMililitresSession[__curChannel] > MAX_MILILITRES_PER_VALVE )          
           waterFlow = WATER_OVERFLOW;
-          return waterFlow;
-        }
         
         // Note the time this processing pass was executed. Note that because we've
         // disabled interrupts the millis() function won't actually be incrementing right
         // at this point, but it will still return the value it was set to just before
         // interrupts went away.
         flowStatsOldTime = newTime;        
-
-        waterFlow = WATER_FLOWING;
-        return waterFlow;
-        
+  
       } else {
-
+        
         waterFlow = WATER_STOPPED;
-        return waterFlow;
+        
+        if (4000 < (newTime - flowStatsOldTime))
+          waterFlow = WATER_BLOCKED;
+        
       }
+      
+      return waterFlow;
   }

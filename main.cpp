@@ -99,19 +99,19 @@ MOD_valves_ *           __MOD_valves;
       switch(__MOD_waterStats->calcFlow())
       {
         case WATER_OVERFLOW:
-          (*__msg) = "Too much water for valve ";
-          (*__msg) += __curChannel;
+          (*__msg) = "Valve ";
+          (*__msg) += (1 + __curChannel);
+          (*__msg) += ":Water overflow";
           __programState = PRGM_STATE_ALERT;
           return;
         break;
-        case WATER_STOPPED:
-          if ( __MOD_waterStats->isWaterClosed() )
-          {
-            (*__msg) = "No water for valve ";
-            (*__msg) += (1 + __curChannel);
-            __programState = PRGM_STATE_ALERT;
-            return;
-          }
+        case WATER_BLOCKED:
+          (*__msg) = "Valve";
+          (*__msg) += (1 + __curChannel);
+          (*__msg) += __curChannel;
+          (*__msg) += ":No water";
+          __programState = PRGM_STATE_ALERT;
+          return;
         break;
         case WATER_FLOWING:
           __MOD_waterStats->printFlow();

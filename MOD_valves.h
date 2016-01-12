@@ -3,6 +3,8 @@
 
 #include <arduino.h> 
 
+#define MAX_VALVES_OPENED 1
+
 class MOD_valves_
 {
   public:
@@ -14,7 +16,6 @@ class MOD_valves_
   int mainPin;
   int *pins;
   int fertilizerPin;
-  int maxOpened;
 
   public:
   

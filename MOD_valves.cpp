@@ -32,8 +32,7 @@
     }
     digitalWrite(mainPin, RELAY_OFF);
     digitalWrite(fertilizerPin, RELAY_OFF);
-    
-    maxOpened      = 1;
+
   }
 
 
@@ -50,7 +49,7 @@
   {       
     if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
     {
-      if (getNbValvesOpened() < maxOpened && !state[__curChannel] )
+      if (getNbValvesOpened() < MAX_VALVES_OPENED && !state[__curChannel] )
       {
         __programState = PRGM_STATE_INSPECTING_FOR_CHANGES;
 
@@ -69,7 +68,6 @@
         state[__curChannel] = 1;
 
         delay(200);
-             
         openMainValve();
 
       }
@@ -89,10 +87,7 @@
         LCD_PRINT(0,0,s);
               
         if (getNbValvesOpened() == 1)
-        {
           closeMainValve();
-          delay(100);
-        }
         
         // fermeture de la vanne         
         digitalWrite(pins[__curChannel], RELAY_OFF);

@@ -1,13 +1,14 @@
 #ifndef __WATER_STATS_H__
 #define __WATER_STATS_H__
 
-#define MAX_MILILITRES_PER_VALVE  25
+#define MAX_MILILITRES_PER_VALVE  500
 
 #include <arduino.h>
 
 enum  waterFlow {
   WATER_FLOWING,
   WATER_STOPPED,
+  WATER_BLOCKED,
   WATER_OVERFLOW
 } ;
 
@@ -49,11 +50,8 @@ class MOD_waterStats_
 
   void printFlow();
 
-  bool isWaterClosed() const;
-  
   /* Calcul des statistiques de consommation d'eau une fois une vanne ouverte
    ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
-    : l'eau coule
   */ 
   int calcFlow();
 
