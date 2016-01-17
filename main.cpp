@@ -16,15 +16,15 @@
 
 // Menu texts
 PROGMEM const char top_menu_item00[]="Start !";
-PROGMEM const char top_menu_item01[]="Configure valve 1";
-PROGMEM const char top_menu_item02[]="Configure valve 2";
-PROGMEM const char top_menu_item03[]="Configure valve 3";
-PROGMEM const char top_menu_item04[]="Configure valve 4";
-PROGMEM const char top_menu_item05[]="Configure valve 5";
-PROGMEM const char top_menu_item06[]="Configure valve 6";
+PROGMEM const char top_menu_item01[]="Config. channel 1";
+PROGMEM const char top_menu_item02[]="Config. channel 2";
+PROGMEM const char top_menu_item03[]="Config. channel 3";
+PROGMEM const char top_menu_item04[]="Config. channel 4";
+PROGMEM const char top_menu_item05[]="Configure channel 5";
+PROGMEM const char top_menu_item06[]="Configure channel 6";
 PROGMEM const char * const top_menu_items[] = {top_menu_item00, top_menu_item01, top_menu_item02, top_menu_item03, top_menu_item04, top_menu_item05, top_menu_item06};
 
-PROGMEM const char menu_config00[]="Activation";
+PROGMEM const char menu_config00[]="Activate";
 PROGMEM const char * const menu_configs[] = {menu_config00};
 
 
@@ -115,8 +115,8 @@ MOD_valves_ *           __MOD_valves;
     
 
     init_phi_prompt(__LCD, keypads, function_keys, LCD_COLUMNS_, LCD_ROWS_, '~');
-
-    LCD_PRINT(2,0,"=== SPRINKLER ===");
+    
+    LCD_PRINT(0,0,">>>>SPRINKLER<<<<<<");
 
     __MOD_valves->purgeTransitionalCircuit();
     
@@ -129,7 +129,8 @@ MOD_valves_ *           __MOD_valves;
   void alertAction()
   {
     __MOD_valves->closeAllValves();
-        
+    __MOD_moistureSensors->setEnabled(false);
+    
     DEBUG_PRINT("ALERT : ");
     DEBUG_PRINTLN(*__msg1);
     
@@ -155,12 +156,12 @@ void initializeAction()
 // Initialize the top menu
   myMenu.ptr.list=(char**)&top_menu_items; // Assign the list to the pointer
   myMenu.low.i=0; // Default item highlighted on the list
-  myMenu.high.i=4; // Last item of the list is size of the list - 1.
+  myMenu.high.i=6; // Last item of the list is size of the list - 1.
   myMenu.width=LCD_COLUMNS_-((global_style&phi_prompt_arrow_dot)!=0)-((global_style&phi_prompt_scroll_bar)!=0); // Auto fit the size of the list to the screen. Length in characters of the longest list item.
   myMenu.step.c_arr[0]=LCD_ROWS_-1; // rows to auto fit entire screen
   myMenu.step.c_arr[1]=1; // one col list
   myMenu.step.c_arr[2]=0; // y for additional feature such as an index
-  myMenu.step.c_arr[3]=LCD_COLUMNS_-4-((global_style&phi_prompt_index_list)!=0); // x for additional feature such as an index
+  myMenu.step.c_arr[3]=LCD_COLUMNS_-6-((global_style&phi_prompt_index_list)!=0); // x for additional feature such as an index
   myMenu.col=0; // Display menu at column 0
   myMenu.row=1; // Display menu at row 1
   myMenu.option=global_style; // Option 0, display classic list, option 1, display 2X2 list, option 2, display list with index, option 3, display list with index2.
@@ -179,7 +180,16 @@ void initializeAction()
     switch (menu_pointer_1) // See which menu item is selected and execute that correspond function
     {
       case 0:
-        __programState = PRGM_STATE_ACTIVATING_MOISTURE_SENSORS;
+
+        if (getNbChannelsActivated() == 0)
+        {
+          __LCD->clear();
+          __LCD->setCursor(0, 1);
+          __LCD->print("All channels are OFF");
+          delay(2000);
+        } else {
+          __programState = PRGM_STATE_ACTIVATING_MOISTURE_SENSORS;
+        }
         break;
       
       default:
@@ -225,7 +235,18 @@ void configureAction()
   __channelActivated [__curChannel] = yn;
 
   __LCD->clear();
-  __LCD->print("Setting stored !");
+  __LCD->setCursor(0, 1);
+  char str[80];
+
+  if (__channelActivated [__curChannel])
+  {
+    sprintf(str, "Channel %i is ON", __curChannel +1);
+    __LCD->print(str);
+  } else {
+    sprintf(str, "Channel %i is OFF", __curChannel +1);
+    __LCD->print(str);
+  }
+  
   wait_on_escape(2000);
 
  __programState = PRGM_STATE_INITIALIZING;
@@ -288,9 +309,15 @@ void configureAction()
     {
       __MOD_moistureSensors->setEnabled(false);
 
+      __LCD->clear();
+      LCD_PRINT(0,1, "ALL PLANTS OK !");
       LCD_PRINT(0,3, "SLEEPING...      ");
       
       DEBUG_PRINTLN("SLEEPING FOR A FEW MINUTES");
+
+      //delay(5000);
+      //__LCD->off();
+
       
       __programState = PRGM_STATE_ACTIVATING_MOISTURE_SENSORS;
       // la valve est fermÃ©e, le tx d'humiditÃ© varie lentement, on peut allonger la durÃ©e entre deux mesures
