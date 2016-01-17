@@ -8,13 +8,20 @@
 // Move any other LCD libraries to another folder or delete them
 // See Library "Docs" folder for possible commands etc.
 #include <LiquidCrystal_I2C.h>
-#include <EEPROM.h>
+#include <phi_interfaces.h>
+#include <phi_prompt.h>
+#include "Eepromutil.h"
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL
 
 #define RELAY_OFF HIGH
 #define RELAY_ON LOW
+
+#define LCD_ROWS_                 4
+#define LCD_COLUMNS_               20
+#define SLEEPING_DURATION_        60000
+#define MAX_CHANNELS_             6
 
 #define LCD_PRINT(col, line, msg)\
 if (__LCD) { \
@@ -37,8 +44,6 @@ delay(50);
 #define DEBUG_PRINTLN(msg) 
 #endif
 
-extern int __eeAddress;   //EEPROM : Location we want the data to be put.
-
 extern LiquidCrystal_I2C *__LCD;
   
 extern String* __msg1;
@@ -52,7 +57,8 @@ extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
 
-extern int __nbChannels;
+extern bool __channelActivated[MAX_CHANNELS_];
+
 extern int __curChannel; // identifiant courant de la sortie à inspecter
   
 //------------------------------------------------------------------------------------
@@ -61,6 +67,7 @@ extern int __curChannel; // identifiant courant de la sortie à inspecter
 
  enum  programState {
     PRGM_STATE_INITIALIZING,
+    PRGM_STATE_CONFIGURE,
     PRGM_STATE_ACTIVATING_MOISTURE_SENSORS,
     PRGM_STATE_READING_MOISTURE_SENSORS,
     PRGM_STATE_INSPECTING_FOR_CHANGES,
@@ -131,6 +138,7 @@ extern int __curChannel; // identifiant courant de la sortie à inspecter
   void sprinklerInit();
 
   void sprinklerAction();
-  
+
+  int getNbChannelsActivated();
 #endif
 

@@ -5,27 +5,27 @@
 
   MOD_valves_::MOD_valves_()
   { 
-    state = new int[__nbChannels];
-    pins = new int[__nbChannels];
+    state = new int[MAX_CHANNELS_];
+    pins = new int[MAX_CHANNELS_];
 
-    memset (state, 0, sizeof(int) * __nbChannels);
-    memset (pins, 0, sizeof(int) * __nbChannels);
+    memset (state, 0, sizeof(int) * MAX_CHANNELS_);
+    memset (pins, 0, sizeof(int) * MAX_CHANNELS_);
     
     mainPin = 53;
 
     pins[0] = 51;    
-    if (__nbChannels > 1) pins[1] = 49;
-    if (__nbChannels > 2) pins[2] = 47;
-    if (__nbChannels > 3) pins[3] = 45;
-    if (__nbChannels > 4) pins[4] = 43;
-    if (__nbChannels > 5) pins[5] = 41;
+    pins[1] = 49;
+    pins[2] = 47;
+    pins[3] = 45;
+    pins[4] = 43;
+    pins[5] = 41;
 
     fertilizerPin = 39;
    
     pinMode(mainPin, OUTPUT);
     pinMode(fertilizerPin, OUTPUT);
     
-    for (int thisPin = 0; thisPin < __nbChannels; thisPin++)
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
       pinMode(pins[thisPin], OUTPUT);
       digitalWrite(pins[thisPin], RELAY_OFF);
@@ -39,14 +39,17 @@
   int  MOD_valves_::getNbValvesOpened()
   {
     int res = 0;
-    for (int thisPin = 0; thisPin < __nbChannels; thisPin++)
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
       res +=state[thisPin];
 
     return res;
   }
   
-  void MOD_valves_::changeValveState()
-  {       
+  bool MOD_valves_::changeValveState()
+  {
+    if (!__channelActivated[__curChannel])
+      return false;
+             
     if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
     {
       if (getNbValvesOpened() < MAX_VALVES_OPENED && !state[__curChannel] )
@@ -99,7 +102,7 @@
          delay(1000);
       } 
     }   
-
+    return true;
   }
 
   void MOD_valves_::purgeTransitionalCircuit()
@@ -113,14 +116,18 @@
     delay(1000);
   }
   
-  void MOD_valves_::openMainValve()
+  bool MOD_valves_::openMainValve()
   {
+     if (!__channelActivated[__curChannel])
+      return false;
+      
      __MOD_waterStats->reset();
-        
+
      digitalWrite(mainPin, RELAY_ON); // activation de la valve principale
 
      digitalWrite(fertilizerPin, RELAY_ON); // activation de la valve principale
 
+     return true;
   }
   
   void MOD_valves_::closeMainValve()
@@ -131,10 +138,8 @@
     digitalWrite(mainPin, RELAY_OFF); // fermeture de la vanne principale
 
     // on laisse le temps a l'eau de s'�couler, et de faire baisser la pression dans les tuyaux
-    while(__MOD_waterStats->calcFlow() != WATER_STOPPED)
-    {
+    while(__MOD_waterStats->calcFlow() == WATER_FLOWING)
       delay(500);
-    }
     
     DEBUG_PRINTLN(" WATER STOPPED");  
 
@@ -145,7 +150,7 @@
   {
     closeMainValve();
 
-    for (int thisPin = 0; thisPin < __nbChannels; thisPin++)
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
       digitalWrite(pins[thisPin], RELAY_OFF); // fermeture de la valve
     }    

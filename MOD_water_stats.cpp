@@ -36,6 +36,8 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
 MOD_waterStats_::MOD_waterStats_() 
 {   
+    waterFlow = WATER_STOPPED;
+    
     flowSensorInterrupt = 0;  // 0 = digital pin 2
     flowSensorPin       = 2; 
     
@@ -49,12 +51,12 @@ MOD_waterStats_::MOD_waterStats_()
     flowPulseCount = 0;
     flowStatsOldTime = 0;
 
-    totalMililitresSession      = new unsigned long[__nbChannels];
-    lastTotalMililitresSession  = new unsigned long[__nbChannels];
-    totalMililitres             = new unsigned long[__nbChannels];
-    nbWaterings                 = new unsigned long[__nbChannels];
+    totalMililitresSession      = new unsigned long[MAX_CHANNELS_];
+    lastTotalMililitresSession  = new unsigned long[MAX_CHANNELS_];
+    totalMililitres             = new unsigned long[MAX_CHANNELS_];
+    nbWaterings                 = new unsigned long[MAX_CHANNELS_];
     
-    for (int ii = 0; ii< __nbChannels; ++ii)
+    for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     {
       totalMililitresSession[ii]       = 0;
       lastTotalMililitresSession[ii]   = 0;
@@ -62,9 +64,9 @@ MOD_waterStats_::MOD_waterStats_()
       totalMililitres[ii]              = 0;
       nbWaterings[ii]                  = 0;
     }
-    //EEPROM.put(__eeAddress, totalMililitres);
-    EEPROM.get(__eeAddress, totalMililitres);
-
+    
+    eeprom_read_bytes(0, (byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
+    
     pinMode(flowSensorPin, INPUT);
     digitalWrite(flowSensorPin, HIGH);
 
@@ -77,6 +79,8 @@ MOD_waterStats_::MOD_waterStats_()
 
 void MOD_waterStats_::reset() 
 {
+  waterFlow = WATER_STOPPED;
+    
   // init water consumption statistics
   totalMililitresSession    [__curChannel] = 0;
   lastTotalMililitresSession[__curChannel] = 0;
@@ -102,8 +106,9 @@ void MOD_waterStats_::show()
   s+= " ml";
 
   LCD_PRINT(0,2, s);
+  
+  eeprom_write_bytes(0, (const byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
 
-  EEPROM.put(__eeAddress, totalMililitres);
 }
 
 void MOD_waterStats_::printFlow() 
@@ -147,7 +152,7 @@ void MOD_waterStats_::printFlow()
       totalMililitresSession[__curChannel] += flowMilliLitres;
       totalMililitres[__curChannel] += flowMilliLitres;
       
-      EEPROM.put(__eeAddress, totalMililitres);
+      eeprom_write_bytes(0, (const byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
       
       unsigned int frac;
 

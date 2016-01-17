@@ -23,11 +23,11 @@ class MOD_valves_
   
   int  getNbValvesOpened();
     
-  void changeValveState();
+  bool changeValveState();
   
   void purgeTransitionalCircuit();
     
-  void openMainValve();
+  bool openMainValve();
     
   void closeMainValve();
    

@@ -3,26 +3,26 @@
 
 MOD_moistureSensors_::MOD_moistureSensors_()
 {
-  activationPin = 32;  
+  activationPin = 36;  
   
-  state     = new int[__nbChannels];
-  prevState = new int[__nbChannels];
-  pins      = new int[__nbChannels];
+  state     = new int[MAX_CHANNELS_];
+  prevState = new int[MAX_CHANNELS_];
+  pins      = new int[MAX_CHANNELS_];
 
-  memset (state, 0, sizeof(int) * __nbChannels);
-  memset (prevState, 0, sizeof(int) * __nbChannels);
-  memset (pins, 0, sizeof(int) * __nbChannels);
+  memset (state, 0, sizeof(int) * MAX_CHANNELS_);
+  memset (prevState, 0, sizeof(int) * MAX_CHANNELS_);
+  memset (pins, 0, sizeof(int) * MAX_CHANNELS_);
   
   pins[0] = 52;
-  if (__nbChannels > 1) pins[1] = 50;
-  if (__nbChannels > 2) pins[2] = 48;
-  if (__nbChannels > 3) pins[3] = 46;
-  if (__nbChannels > 4) pins[4] = 44;
-  if (__nbChannels > 5) pins[5] = 42;
+  pins[1] = 50;
+  pins[2] = 48;
+  pins[3] = 46;
+  pins[4] = 44;
+  pins[5] = 42;
 
   pinMode(activationPin, OUTPUT);
 
-  for (int ii = 0; ii< __nbChannels; ++ii)
+  for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     pinMode(pins[ii], INPUT);
 
 }
@@ -31,11 +31,15 @@ String MOD_moistureSensors_::getState(bool newState)
 {
     String str;
     str+="-Hum : [";
-    
-    for (int ii = 0; ii< __nbChannels; ++ii)
-    {
-      str+= newState ? state[ii] : prevState[ii];
-      str += " "; 
+
+    for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
+    { 
+      if (__channelActivated[ii])
+      {
+        str += newState ? state[ii] : prevState[ii];; 
+      } else {
+        str += "-";
+      }
     }    
     str+="]";
     return str;
@@ -43,7 +47,7 @@ String MOD_moistureSensors_::getState(bool newState)
 
   void MOD_moistureSensors_::readValues()
   {
-    for (int thisPin = 0; thisPin < __nbChannels; thisPin++)
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
       state[thisPin] = digitalRead(pins[thisPin]);
     }
