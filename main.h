@@ -12,22 +12,16 @@
 #include <phi_prompt.h>
 #include "Eepromutil.h"
 
+#include "GUI.h"
+
 //#define WITH_SERIAL
 #undef WITH_SERIAL
 
 #define RELAY_OFF HIGH
 #define RELAY_ON LOW
 
-#define LCD_ROWS_                 4
-#define LCD_COLUMNS_               20
 #define SLEEPING_DURATION_        60000
 #define MAX_CHANNELS_             6
-
-#define LCD_PRINT(col, line, msg)\
-if (__LCD) { \
-__LCD->setCursor(col,line);\
-__LCD->print(msg);\
-delay(50);}\
   
 #ifdef WITH_SERIAL
 #define DEBUG_PRINT(msg)\
@@ -43,8 +37,6 @@ delay(50);
 #else
 #define DEBUG_PRINTLN(msg) 
 #endif
-
-extern LiquidCrystal_I2C *__LCD;
   
 extern String* __msg1;
 extern String* __msg2;
@@ -57,7 +49,13 @@ extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
 
-extern bool __channelActivated[MAX_CHANNELS_];
+typedef struct 
+{
+  bool active = false;
+  int maxMlPerSession = 1000;
+} chanConf;
+
+extern chanConf __channelConfig[MAX_CHANNELS_];
 
 extern int __curChannel; // identifiant courant de la sortie à inspecter
   

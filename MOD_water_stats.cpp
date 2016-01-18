@@ -2,6 +2,9 @@
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
+#define LIBCALL_ENABLEINTERRUPT
+#include <EnableInterrupt.h>
+
 void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
   /*
@@ -73,7 +76,7 @@ MOD_waterStats_::MOD_waterStats_()
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    attachInterrupt(flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
+    enableInterrupt(flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
 }
 
 
@@ -91,7 +94,7 @@ void MOD_waterStats_::reset()
 
 void MOD_waterStats_::show()
 {
-  __LCD->clear();
+  __gui->lcd->clear();
   LCD_PRINT(0,0, " == STATISTICS == ");
   
   String s;
@@ -131,7 +134,7 @@ void MOD_waterStats_::printFlow()
 
       // Disable the interrupt while calculating flow rate and sending the value to
       // the host
-      detachInterrupt(flowSensorInterrupt);
+      disableInterrupt(flowSensorInterrupt);
 
       // Because this loop may not complete in exactly 1 second intervals we calculate
       // the number of milliseconds that have passed since the last execution and use
@@ -181,7 +184,7 @@ void MOD_waterStats_::printFlow()
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    attachInterrupt(__MOD_waterStats->flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
+    enableInterrupt(__MOD_waterStats->flowSensorInterrupt, globalFlowIncPulseCounter, FALLING);
     
       //DEBUG_PRINT("diff:");
       //DEBUG_PRINTLN(diffMillilitres);
@@ -198,7 +201,7 @@ void MOD_waterStats_::printFlow()
       {
         waterFlow = WATER_FLOWING;
         
-        if ( totalMililitresSession[__curChannel] > MAX_MILILITRES_PER_VALVE )          
+        if ( totalMililitresSession[__curChannel] > __channelConfig[__curChannel].maxMlPerSession )          
           waterFlow = WATER_OVERFLOW;
         
         // Note the time this processing pass was executed. Note that because we've

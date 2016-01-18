@@ -47,7 +47,8 @@
   
   bool MOD_valves_::changeValveState()
   {
-    if (!__channelActivated[__curChannel])
+    
+    if (!__channelConfig[__curChannel].active)
       return false;
              
     if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
@@ -64,7 +65,7 @@
         s+= (1 + __curChannel);
         s+= " OPENED";
 
-        __LCD->clear();
+        __gui->lcd->clear();
         LCD_PRINT(0,0,s);
     
         digitalWrite(pins[__curChannel], RELAY_ON); // activation de la valve
@@ -74,8 +75,9 @@
         openMainValve();
 
       }
-    } 
-    else { // fermeture du moisture sensor
+    }
+    else {
+      // fermeture du moisture sensor
 
       if (state[__curChannel]) 
       {  
@@ -101,7 +103,7 @@
 
          delay(1000);
       } 
-    }   
+    }
     return true;
   }
 
@@ -118,7 +120,7 @@
   
   bool MOD_valves_::openMainValve()
   {
-     if (!__channelActivated[__curChannel])
+     if (!__channelConfig[__curChannel].active)
       return false;
       
      __MOD_waterStats->reset();

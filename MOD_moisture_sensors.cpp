@@ -25,6 +25,7 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     pinMode(pins[ii], INPUT);
 
+  setEnabled(false);
 }
   
 String MOD_moistureSensors_::getState(bool newState)
@@ -34,7 +35,7 @@ String MOD_moistureSensors_::getState(bool newState)
 
     for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     { 
-      if (__channelActivated[ii])
+      if (__channelConfig[ii].active)
       {
         str += newState ? state[ii] : prevState[ii];; 
       } else {

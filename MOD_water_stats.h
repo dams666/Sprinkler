@@ -3,14 +3,14 @@
 
 #define MAX_MILILITRES_PER_VALVE  50
 
-#include <arduino.h>
+#include <Arduino.h>
 
 enum  waterFlow {
   WATER_FLOWING,
   WATER_STOPPED,
   WATER_BLOCKED,
   WATER_OVERFLOW
-} ;
+};
 
 class MOD_waterStats_
 {
