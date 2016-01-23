@@ -98,7 +98,8 @@ void MOD_waterStats_::start()
 void MOD_waterStats_::show()
 {
   LCD_CLEAR();
-  LCD_PRINT(0,0, " == STATISTICS == ");
+  
+  __gui->centerText("STATISTICS");
   
   String s;
   s = "-Water used:";
@@ -112,8 +113,6 @@ void MOD_waterStats_::show()
   s+= " ml";
 
   LCD_PRINT(0,2, s);
-
-  writeCurChannelStorage();
 
 }
 

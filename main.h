@@ -69,9 +69,9 @@ extern chanConf __channelStorage[MAX_CHANNELS_];
 extern int __curChannel; // identifiant courant de la sortie à inspecter
 
 extern void readChannelStorages();
+extern void writeChannelStorages();
 extern void readCurChannelStorage();
 extern void writeCurChannelStorage();
-
 //------------------------------------------------------------------------------------
 // PROGRAM STATE
 //------------------------------------------------------------------------------------
@@ -86,7 +86,8 @@ extern void writeCurChannelStorage();
     PRGM_STATE_ALERT
   };
   
-  extern int __programState;
+extern int            __programState;
+extern unsigned long  __nextStateMillis;
 
   /*
   On définit un état spécifique des lors qu'il dure un certain temps
@@ -151,5 +152,8 @@ extern void writeCurChannelStorage();
   void sprinklerAction();
 
   int getNbChannelsActivated();
+
+  void setNextState(int state, unsigned int delay_ = 100);
+  
 #endif
 

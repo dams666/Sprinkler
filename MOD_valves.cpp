@@ -62,8 +62,6 @@
     {
       if (getNbValvesOpened() < MAX_VALVES_OPENED && !state[__curChannel] )
       {
-        __programState = PRGM_STATE_INSPECTING_FOR_CHANGES;
-
         DEBUG_PRINT(" => OPEN VALVE ");
         DEBUG_PRINTLN(__curChannel);
 
@@ -107,7 +105,6 @@
         state[__curChannel] = 0;
 
         __MOD_waterStats->show();
-
          delay(1000);
       } 
     }

@@ -8,6 +8,7 @@
 // -------------------------------------------------------------------------------------------------
 
 int                     __programState;
+unsigned long           __nextStateMillis;
 int                     __curChannel;
 String *                __msg1;
 String *                __msg2;
@@ -24,6 +25,13 @@ void readChannelStorages()
 {
   eeprom_read_bytes(  0, 
                       (byte*)__channelStorage,
+                      MAX_CHANNELS_ * sizeof(chanConf));
+}
+
+void writeChannelStorages()
+{
+  eeprom_write_bytes(  0, 
+                      (const byte*)__channelStorage,
                       MAX_CHANNELS_ * sizeof(chanConf));
 }
 
@@ -48,7 +56,13 @@ int getNbChannelsActivated()
     res += (int)__channelStorage[thisPin].active;
   return res;
 }
-  
+
+void setNextState(int state, unsigned int delay_)
+{
+  __programState = state;
+  __nextStateMillis = millis() + delay_;
+}
+
   void sprinklerInit()
   {
     // initialize serial communication at 9600 bits per second:
@@ -61,7 +75,7 @@ int getNbChannelsActivated()
     // INIT GLOBAL VARS
     //------------------------------------------------------------------------------------
         
-    __programState = PRGM_STATE_INITIALIZING;
+    setNextState (PRGM_STATE_INITIALIZING);
         
     __curChannel = 0;
 
@@ -126,12 +140,8 @@ int getNbChannelsActivated()
           /* Attend l'appui sur un bouton */
     }
 
-     __programState = PRGM_STATE_INITIALIZING;
+     setNextState(PRGM_STATE_INITIALIZING);
   }
-
-
-
-
 
   void inspectForChangesAction()
   {      
@@ -156,7 +166,7 @@ int getNbChannelsActivated()
           (*__msg1) += " : Water";
           (*__msg2) = "overflow";
           
-          __programState = PRGM_STATE_ALERT;
+          setNextState(PRGM_STATE_ALERT);
           return;
         break;
         case WATER_BLOCKED:
@@ -164,7 +174,7 @@ int getNbChannelsActivated()
           (*__msg1) += (1 + __curChannel);
           (*__msg1) += " : No water";
           (*__msg2) = "";
-          __programState = PRGM_STATE_ALERT;
+          setNextState(PRGM_STATE_ALERT);
           return;
         break;
         case WATER_FLOWING:
@@ -179,7 +189,7 @@ int getNbChannelsActivated()
     // on doit détecter les changements sur les autres vannes
     if (__curChannel < MAX_CHANNELS_ )
     {
-      __programState = PRGM_STATE_INSPECTING_FOR_CHANGES;
+      setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
       return;
     } 
     __curChannel = 0;
@@ -198,25 +208,27 @@ int getNbChannelsActivated()
       //delay(5000);
       //__gui->lcd->off();
 
-      
-      __programState = PRGM_STATE_ACTIVATING_MOISTURE_SENSORS;
-      // la valve est fermÃ©e, le tx d'humiditÃ© varie lentement, on peut allonger la durÃ©e entre deux mesures
-      delay(SLEEPING_DURATION_);
-
+      setNextState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS, SLEEPING_DURATION_);
       return;
     }            
 
-    __programState = PRGM_STATE_READING_MOISTURE_SENSORS;
+    // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
+    setNextState(PRGM_STATE_READING_MOISTURE_SENSORS, 1000);
     
-     // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
-    delay(1000);
-   
   }
 
 
  
 void sprinklerAction()
 {
+  
+  if (millis() < __nextStateMillis)
+  {
+    __gui->readPushButton();
+    delay(50);
+    return;
+  }
+  
   switch (__programState)
   {
       case PRGM_STATE_INITIALIZING:
@@ -231,7 +243,7 @@ void sprinklerAction()
    
         __MOD_moistureSensors->setEnabled(true);
 
-        __programState = PRGM_STATE_READING_MOISTURE_SENSORS;
+        setNextState(PRGM_STATE_READING_MOISTURE_SENSORS);
     
         break;
   
@@ -241,7 +253,7 @@ void sprinklerAction()
         
         LCD_PRINT(0,2,__MOD_moistureSensors->getState());
         
-        __programState = PRGM_STATE_INSPECTING_FOR_CHANGES;
+        setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
   
         break;
   

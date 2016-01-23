@@ -22,8 +22,33 @@ static const Menu_t MAIN_MENU = {
   &doMainMenuAction
 };
 
+
 // -------------------------------------------------------
-// SOUS MENU 
+// SOUS MENU : STATISTICS 
+// -------------------------------------------------------
+
+void doStatisticsMenuAction(byte);
+ 
+/* Sous menu pour Dr Freeman */
+static const char* STATISTICS_MENU_ITEMS[] = {
+  "Channel 1",
+  "Channel 2",
+  "Channel 3",
+  "Channel 4",
+  "Channel 5",
+  "Channel 6",
+  "Return to main"
+};
+
+static const Menu_t STATISTICS_MENU = {
+  "Statistics",
+  STATISTICS_MENU_ITEMS,
+  7,
+  &doStatisticsMenuAction
+};
+
+// -------------------------------------------------------
+// SOUS MENU : CONFIGURATION
 // -------------------------------------------------------
 
 void doConfigureMenuAction(byte);
@@ -36,7 +61,7 @@ static const char* CONFIGURE_MENU_ITEMS[] = {
   "Channel 4",
   "Channel 5",
   "Channel 6",
-  "Restore default",
+  "Factory settings",
   "Return to main"
 };
 static const Menu_t CONFIGURE_MENU = {
