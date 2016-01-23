@@ -8,7 +8,6 @@
     state = new int[MAX_CHANNELS_];
     pins = new int[MAX_CHANNELS_];
 
-    memset (state, 0, sizeof(int) * MAX_CHANNELS_);
     memset (pins, 0, sizeof(int) * MAX_CHANNELS_);
     
     mainPin = 53;
@@ -28,14 +27,26 @@
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
       pinMode(pins[thisPin], OUTPUT);
+    }
+
+    reset();
+  }
+
+  void MOD_valves_::reset()
+  {
+    memset (state, 0, sizeof(int) * MAX_CHANNELS_);
+
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+    {
       digitalWrite(pins[thisPin], RELAY_OFF);
     }
+    
     digitalWrite(mainPin, RELAY_OFF);
     digitalWrite(fertilizerPin, RELAY_OFF);
-
   }
 
 
+  
   int  MOD_valves_::getNbValvesOpened()
   {
     int res = 0;
@@ -65,7 +76,7 @@
         s+= (1 + __curChannel);
         s+= " OPENED";
 
-        __gui->lcd->clear();
+        LCD_CLEAR();
         LCD_PRINT(0,0,s);
     
         digitalWrite(pins[__curChannel], RELAY_ON); // activation de la valve
@@ -123,7 +134,7 @@
      if (!__channelConfig[__curChannel].active)
       return false;
       
-     __MOD_waterStats->reset();
+     __MOD_waterStats->start();
 
      digitalWrite(mainPin, RELAY_ON); // activation de la valve principale
 

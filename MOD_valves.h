@@ -2,10 +2,11 @@
 #define __VALVES_H__
 
 #include <arduino.h> 
+#include "module.h"
 
 #define MAX_VALVES_OPENED 1
 
-class MOD_valves_
+class MOD_valves_ : public Module
 {
   public:
 
@@ -20,6 +21,8 @@ class MOD_valves_
   public:
   
   MOD_valves_();
+
+  void reset();
   
   int  getNbValvesOpened();
     

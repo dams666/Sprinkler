@@ -4,6 +4,7 @@
 #define MAX_MILILITRES_PER_VALVE  50
 
 #include <Arduino.h>
+#include "module.h"
 
 enum  waterFlow {
   WATER_FLOWING,
@@ -12,8 +13,17 @@ enum  waterFlow {
   WATER_OVERFLOW
 };
 
-class MOD_waterStats_
+
+
+class MOD_waterStats_ : public Module
 {
+
+  typedef struct 
+  {
+    int maxMlPerSession = 1000;
+  
+  } chanConf;
+  
   protected :
   
   unsigned long flowStatsOldTime;
@@ -46,6 +56,7 @@ class MOD_waterStats_
 
   void reset();
 
+  void start();
   void show();
 
   void printFlow();

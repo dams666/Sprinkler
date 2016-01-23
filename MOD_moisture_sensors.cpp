@@ -1,5 +1,5 @@
-#include "main.h"
 #include "MOD_moisture_sensors.h"
+#include "main.h"
 
 MOD_moistureSensors_::MOD_moistureSensors_()
 {
@@ -27,7 +27,15 @@ MOD_moistureSensors_::MOD_moistureSensors_()
 
   setEnabled(false);
 }
-  
+
+
+void MOD_moistureSensors_::reset()
+{
+  setEnabled(false);
+}
+
+
+
 String MOD_moistureSensors_::getState(bool newState)
 {
     String str;

@@ -26,7 +26,7 @@ GUI *                   __gui;
   {
     int res = 0;
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
-      res +=__channelConfig[thisPin].active;
+      res += (int)__channelConfig[thisPin].active;
     return res;
   }
   
@@ -89,85 +89,27 @@ GUI *                   __gui;
     
     DEBUG_PRINT("ALERT : ");
     DEBUG_PRINTLN(*__msg1);
-    
+
     while(true)
     {
-      __gui->lcd->clear();
-      delay(100);    
+      if (__gui->readPushButton() != BP_NONE){break;}
+    
+      LCD_CLEAR();
       LCD_PRINT(3,0, "=== ALERT ! ===");
 
       LCD_PRINT(0,2, *__msg1);
       if ((*__msg2) != "") LCD_PRINT(0,3, *__msg2);
       
       delay(1000);
+
+          /* Attend l'appui sur un bouton */
     }
+
+     __programState = PRGM_STATE_INITIALIZING;
   }
 
 
 
-
-void configureAction()
-{
-  char buffer[32];
-
-  //----------------------------------------------------------------
-  // Activation de la vanne
-  
-  byte yn;
-  
-  __gui->lcd->clear();
-  //strcpy_P(buffer,(char*)pgm_read_word(config_menu_items));
-  //yn=yn_dialog(buffer);
-
-  //__channelConfig[__curChannel].active = yn;
-
-  /*
-  __gui->lcd->clear();
-  __gui->lcd->setCursor(0, 1);
-  char str[80];
-
-  if (__channelConfig[__curChannel].active)
-  {
-    sprintf(str, "Channel %i is ON", __curChannel +1);
-    __gui->lcd->print(str);
-  } else {
-    sprintf(str, "Channel %i is OFF", __curChannel +1);
-    __gui->lcd->print(str);
-  }
-  
-  wait_on_escape(2000);
-
-  */
-  //----------------------------------------------------------------
-  // définition du max ml par session
-/*  
-  int user_input=1000; // This is the storage for the integer 
-  phi_prompt_struct myIntegerInput; // This struct stores information for library functions
-  myIntegerInput.ptr.i_buffer=&user_input; // Pass the address of user_input to the library. After library function call, user input will be stored in this variable. Note the use of “&”. 
-  myIntegerInput.low.i=0; // Lower limit. The number wraps to 20 when decreased from 0. 
-  myIntegerInput.high.i=2000; // Upper limit. The number wraps to 0 when increased from 20. 
-  myIntegerInput.step.i=50; // Step size. You will get 0, 2, 4, 6, 8, etc if you set it to 2. 
-  myIntegerInput.col=7; // Display the number at column 7 
-  myIntegerInput.row=1; // Display the number at row 1 
-  myIntegerInput.width=2; // The number occupies 2 character space. 
-  myIntegerInput.option=0; // Option 0, space pad right, 1, zero pad left, 2, space pad left. 
-  __gui->lcd->clear(); // Clear the _LCD-> 
-  __gui->lcd->print("Max ml per session:"); // Prompt user for input 
-  input_integer(&myIntegerInput); // This calls the library function. The initial number will be displayed first and the functions waits for the user to press up/down to change the number and enter to confirm, after which it stores the new number in user_input. Notice the "&" in front of the myIntegerInput struct.
-
-  __channelConfig[__curChannel].maxMlPerSession = user_input;
-  */
-  /*
-  // Use sscanf to turn text input into number, that is if the input is number
-  __gui->lcd->clear();
-  __gui->lcd->print("Max ml/session:");
-  __gui->lcd->print(user_input);
-  wait_on_escape(2000);
-  */
-  
-
- __programState = PRGM_STATE_INITIALIZING;
-}
 
 
   void inspectForChangesAction()
@@ -226,7 +168,7 @@ void configureAction()
     {
       __MOD_moistureSensors->setEnabled(false);
 
-      __gui->lcd->clear();
+      LCD_CLEAR();
       LCD_PRINT(0,1, "ALL PLANTS OK !");
       LCD_PRINT(0,3, "SLEEPING...      ");
       
@@ -260,13 +202,6 @@ void sprinklerAction()
         DEBUG_PRINTLN("--- INITIALIZING --- ");
           
         __gui->displayMenu(MAIN_MENU);
-        
-        break;
-        
-      case PRGM_STATE_CONFIGURE:
-        DEBUG_PRINTLN("--- CONFIGURATION --- ");
-          
-        configureAction();
         
         break;
       case PRGM_STATE_ACTIVATING_MOISTURE_SENSORS:

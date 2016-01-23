@@ -2,8 +2,9 @@
 #define __MOISTURE_SENSOR_H__
 
 #include <arduino.h>
+#include "module.h"
 
-class MOD_moistureSensors_
+class MOD_moistureSensors_ : public Module
 {
   public:
   
@@ -19,6 +20,8 @@ class MOD_moistureSensors_
   public:
   
   MOD_moistureSensors_();
+
+  void reset();
 
   void readValues();
   

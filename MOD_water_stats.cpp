@@ -39,8 +39,6 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
 MOD_waterStats_::MOD_waterStats_() 
 {   
-    waterFlow = WATER_STOPPED;
-    
     flowSensorInterrupt = 0;  // 0 = digital pin 2
     flowSensorPin       = 2; 
     
@@ -58,21 +56,12 @@ MOD_waterStats_::MOD_waterStats_()
     lastTotalMililitresSession  = new unsigned long[MAX_CHANNELS_];
     totalMililitres             = new unsigned long[MAX_CHANNELS_];
     nbWaterings                 = new unsigned long[MAX_CHANNELS_];
-    
-    for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
-    {
-      totalMililitresSession[ii]       = 0;
-      lastTotalMililitresSession[ii]   = 0;
-
-      totalMililitres[ii]              = 0;
-      nbWaterings[ii]                  = 0;
-    }
-    
-    eeprom_read_bytes(0, (byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
-    
+        
     pinMode(flowSensorPin, INPUT);
     digitalWrite(flowSensorPin, HIGH);
 
+    reset();
+      
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
@@ -81,6 +70,21 @@ MOD_waterStats_::MOD_waterStats_()
 
 
 void MOD_waterStats_::reset() 
+{
+  waterFlow = WATER_STOPPED;
+    
+  flowStatsOldTime = 0;
+
+  for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
+  {
+    totalMililitresSession    [ii]  = 0;
+    lastTotalMililitresSession[ii]  = 0;
+    nbWaterings               [ii]  = 0;                   
+  }
+  eeprom_read_bytes(0, (byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
+}
+
+void MOD_waterStats_::start()
 {
   waterFlow = WATER_STOPPED;
     
@@ -94,7 +98,7 @@ void MOD_waterStats_::reset()
 
 void MOD_waterStats_::show()
 {
-  __gui->lcd->clear();
+  LCD_CLEAR();
   LCD_PRINT(0,0, " == STATISTICS == ");
   
   String s;

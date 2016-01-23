@@ -8,8 +8,6 @@
 // Move any other LCD libraries to another folder or delete them
 // See Library "Docs" folder for possible commands etc.
 #include <LiquidCrystal_I2C.h>
-#include <phi_interfaces.h>
-#include <phi_prompt.h>
 #include "Eepromutil.h"
 
 #include "GUI.h"
@@ -53,6 +51,8 @@ typedef struct
 {
   bool active = false;
   int maxMlPerSession = 1000;
+
+  
 } chanConf;
 
 extern chanConf __channelConfig[MAX_CHANNELS_];
