@@ -53,25 +53,30 @@ void doConfigureMenuAction(byte selectedMenuItem)
         //----------------------------------------------------------------
         // Activation de la vanne
       
-        __channelConfig[selectedMenuItem].active = __gui->displayYNPrompt("ACTIVATE ?", __channelConfig[selectedMenuItem].active); 
+        __channelStorage[selectedMenuItem].active = __gui->displayYNPrompt("ACTIVATE ?", __channelStorage[selectedMenuItem].active); 
           
         LCD_CLEAR();
       
         char str[80];
       
-        if (__channelConfig[selectedMenuItem].active)
+        if (__channelStorage[selectedMenuItem].active)
         {
           sprintf(str, "Channel %i is ON", selectedMenuItem +1);
         } else {
           sprintf(str, "Channel %i is OFF", selectedMenuItem +1);
         }
-      
+
         __gui->displayText(str);
         
         //----------------------------------------------------------------
         // définition du max ml par session
-        __gui->displayIntPrompt("Max ml per session:", "ml", 400, 0, 1000, 20);
-        
+        __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( "Max ml per session:", "ml",
+                                                                                                        __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
+                                                                                                        0, 1000, 20);
+
+        __curChannel = selectedMenuItem;        
+        writeCurChannelStorage();
+       
        __programState = PRGM_STATE_INITIALIZING;
         
     }

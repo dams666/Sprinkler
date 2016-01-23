@@ -10,7 +10,7 @@ class Module
   virtual ~Module(){}
     
   virtual void reset() = 0;
-  
+
 };
 
 

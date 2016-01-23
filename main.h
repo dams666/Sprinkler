@@ -47,18 +47,31 @@ extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
 
+
+typedef struct 
+{
+  unsigned int  maxMlPerSession;
+  unsigned long totalMililitres;
+  unsigned int  nbWaterings;
+  
+} waterStatsChanStorage_;
+
 typedef struct 
 {
   bool active = false;
-  int maxMlPerSession = 1000;
 
+  waterStatsChanStorage_ waterStatsStorage;
   
 } chanConf;
 
-extern chanConf __channelConfig[MAX_CHANNELS_];
+extern chanConf __channelStorage[MAX_CHANNELS_];
 
 extern int __curChannel; // identifiant courant de la sortie à inspecter
-  
+
+extern void readChannelStorages();
+extern void readCurChannelStorage();
+extern void writeCurChannelStorage();
+
 //------------------------------------------------------------------------------------
 // PROGRAM STATE
 //------------------------------------------------------------------------------------

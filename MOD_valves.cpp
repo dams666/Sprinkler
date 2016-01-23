@@ -59,7 +59,7 @@
   bool MOD_valves_::changeValveState()
   {
     
-    if (!__channelConfig[__curChannel].active)
+    if (!__channelStorage[__curChannel].active)
       return false;
              
     if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
@@ -131,7 +131,7 @@
   
   bool MOD_valves_::openMainValve()
   {
-     if (!__channelConfig[__curChannel].active)
+     if (!__channelStorage[__curChannel].active)
       return false;
       
      __MOD_waterStats->start();

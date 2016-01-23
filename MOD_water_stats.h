@@ -17,22 +17,12 @@ enum  waterFlow {
 
 class MOD_waterStats_ : public Module
 {
-
-  typedef struct 
-  {
-    int maxMlPerSession = 1000;
-  
-  } chanConf;
-  
   protected :
   
   unsigned long flowStatsOldTime;
 
   unsigned long *totalMililitresSession;
   unsigned long *lastTotalMililitresSession;
-  
-  unsigned long *totalMililitres;
-  unsigned long *nbWaterings;
   
   int waterFlow;
   

@@ -1,9 +1,9 @@
 #include "main.h"
+#include "menus.h"
+
 #include "MOD_moisture_sensors.h"
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
-
-#include "menus.h"
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ int                     __programState;
 int                     __curChannel;
 String *                __msg1;
 String *                __msg2;
-chanConf                __channelConfig[MAX_CHANNELS_];
+chanConf                __channelStorage[MAX_CHANNELS_];
 MOD_moistureSensors_ *  __MOD_moistureSensors;
 MOD_waterStats_ *       __MOD_waterStats;
 MOD_valves_ *           __MOD_valves;
@@ -20,15 +20,34 @@ GUI *                   __gui;
 // -------------------------------------------------------------------------------------------------
 
 
+void readChannelStorages()
+{
+  eeprom_read_bytes(  0, 
+                      (byte*)__channelStorage,
+                      MAX_CHANNELS_ * sizeof(chanConf));
+}
 
+void readCurChannelStorage()
+{
+   eeprom_read_bytes( sizeof(chanConf) * __curChannel,
+                      (byte*)(__channelStorage + __curChannel),
+                      sizeof(chanConf)); 
+}
 
-  int getNbChannelsActivated()
-  {
-    int res = 0;
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
-      res += (int)__channelConfig[thisPin].active;
-    return res;
-  }
+void writeCurChannelStorage()
+{
+  eeprom_write_bytes( sizeof(chanConf) * __curChannel, 
+                      (const byte*)(__channelStorage + __curChannel), 
+                      sizeof(chanConf)); 
+}
+
+int getNbChannelsActivated()
+{
+  int res = 0;
+  for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+    res += (int)__channelStorage[thisPin].active;
+  return res;
+}
   
   void sprinklerInit()
   {
@@ -41,11 +60,7 @@ GUI *                   __gui;
     //------------------------------------------------------------------------------------ 
     // INIT GLOBAL VARS
     //------------------------------------------------------------------------------------
-
-    // tout les canaux sont désactivés au démarrage
-    // TODO : sauvegarder l'état dans l'EEPROM
-    //memset(__channelConfig[__curChannel].active, 0, MAX_CHANNELS_);
-    
+        
     __programState = PRGM_STATE_INITIALIZING;
         
     __curChannel = 0;
@@ -62,6 +77,12 @@ GUI *                   __gui;
     //------------------------------------------------------------------------------------ 
     // INIT MODULES
     //------------------------------------------------------------------------------------
+
+    // tout les canaux sont désactivés au démarrage
+    // TODO : sauvegarder l'état dans l'EEPROM
+    //eeprom_erase_all(0);
+
+    readChannelStorages();
     
     __MOD_moistureSensors = new MOD_moistureSensors_();
     __MOD_waterStats      = new MOD_waterStats_();
@@ -115,12 +136,12 @@ GUI *                   __gui;
   void inspectForChangesAction()
   {      
     // détection de changement d'état du moisture sensor
-    if (__channelConfig[__curChannel].active && __MOD_moistureSensors->state[__curChannel] != __MOD_moistureSensors->prevState[__curChannel]) 
+    if (__channelStorage[__curChannel].active && __MOD_moistureSensors->state[__curChannel] != __MOD_moistureSensors->prevState[__curChannel]) 
     {
       __MOD_valves->changeValveState();
     }
     // détection de reprise suite à l'extinction d'une autre vanne
-    if (__channelConfig[__curChannel].active && __MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) 
+    if (__channelStorage[__curChannel].active && __MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) 
     {
       __MOD_valves->changeValveState();
     }

@@ -54,14 +54,14 @@ MOD_waterStats_::MOD_waterStats_()
 
     totalMililitresSession      = new unsigned long[MAX_CHANNELS_];
     lastTotalMililitresSession  = new unsigned long[MAX_CHANNELS_];
-    totalMililitres             = new unsigned long[MAX_CHANNELS_];
-    nbWaterings                 = new unsigned long[MAX_CHANNELS_];
-        
+    
     pinMode(flowSensorPin, INPUT);
     digitalWrite(flowSensorPin, HIGH);
 
+    readCurChannelStorage();
+    
     reset();
-      
+       
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
@@ -78,10 +78,8 @@ void MOD_waterStats_::reset()
   for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
   {
     totalMililitresSession    [ii]  = 0;
-    lastTotalMililitresSession[ii]  = 0;
-    nbWaterings               [ii]  = 0;                   
+    lastTotalMililitresSession[ii]  = 0;               
   }
-  eeprom_read_bytes(0, (byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
 }
 
 void MOD_waterStats_::start()
@@ -91,8 +89,11 @@ void MOD_waterStats_::start()
   // init water consumption statistics
   totalMililitresSession    [__curChannel] = 0;
   lastTotalMililitresSession[__curChannel] = 0;
-  nbWaterings               [__curChannel]++;
+  
+  __channelStorage[__curChannel].waterStatsStorage.nbWaterings++;
 
+  writeCurChannelStorage();
+  
   flowStatsOldTime = millis();
 }
 
@@ -109,12 +110,12 @@ void MOD_waterStats_::show()
   LCD_PRINT(0,1, s);
     
   s = "-Total     :";
-  s+= totalMililitres[__curChannel];
+  s+= __channelStorage[__curChannel].waterStatsStorage.totalMililitres;
   s+= " ml";
 
   LCD_PRINT(0,2, s);
-  
-  eeprom_write_bytes(0, (const byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
+
+  writeCurChannelStorage();
 
 }
 
@@ -156,10 +157,10 @@ void MOD_waterStats_::printFlow()
       unsigned int flowMilliLitres = (flowRate / 60) * 1000;
 
       // Add the millilitres passed in this second to the cumulative total
-      totalMililitresSession[__curChannel] += flowMilliLitres;
-      totalMililitres[__curChannel] += flowMilliLitres;
-      
-      eeprom_write_bytes(0, (const byte*)totalMililitres, MAX_CHANNELS_ * sizeof(long));
+      totalMililitresSession[__curChannel]  += flowMilliLitres;
+      __channelStorage[__curChannel].waterStatsStorage.totalMililitres += flowMilliLitres;
+
+      writeCurChannelStorage();
       
       unsigned int frac;
 
@@ -205,7 +206,7 @@ void MOD_waterStats_::printFlow()
       {
         waterFlow = WATER_FLOWING;
         
-        if ( totalMililitresSession[__curChannel] > __channelConfig[__curChannel].maxMlPerSession )          
+        if ( totalMililitresSession[__curChannel] > __channelStorage[__curChannel].waterStatsStorage.maxMlPerSession )          
           waterFlow = WATER_OVERFLOW;
         
         // Note the time this processing pass was executed. Note that because we've
