@@ -23,6 +23,8 @@ class MOD_waterStats_ : public Module
 
   unsigned long *totalMililitresSession;
   unsigned long *lastTotalMililitresSession;
+
+  float*flowRate; // in L/min
   
   int waterFlow;
   

@@ -104,14 +104,11 @@ void setNextState(int state, unsigned int delay_)
     // INIT PHI_PROMPT LIBRARY
     //------------------------------------------------------------------------------------
     
-    
-    LCD_PRINT(0,0,">>>>SPRINKLER<<<<<<");
+    __gui->centerText("SPRINKLER");
 
     __MOD_valves->purgeTransitionalCircuit();
     
-    DEBUG_PRINTLN("INITIALIZATION : Done");
-
-    delay(3000);
+    delay(2000);
 
   }
 
@@ -193,8 +190,7 @@ void setNextState(int state, unsigned int delay_)
     }            
 
     // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
-    setNextState(PRGM_STATE_READING_MOISTURE_SENSORS, 1000);
-    
+    setNextState(PRGM_STATE_READING_MOISTURE_SENSORS, 500);
   }
 
 
@@ -209,8 +205,9 @@ void sprinklerAction()
     if ((button = __gui->readPushButton()) != BP_NONE)
     {
       // si aucune vanne n'est ouverte, on peut interrompre la prochaine tâche et afficher le menu principal
-      if (__MOD_valves->getNbValvesOpened() == 0  && __programState != PRGM_STATE_ALERT)
+      if (__programState != PRGM_STATE_ALERT)
       {
+        __MOD_valves->closeAllValves();
         setNextState(PRGM_STATE_INITIALIZING);
       }
     } else {
@@ -241,7 +238,7 @@ void sprinklerAction()
   
         __MOD_moistureSensors->readValues();
         
-        LCD_PRINT(0,2,__MOD_moistureSensors->getState());
+        LCD_PRINT(0,1,__MOD_moistureSensors->getState());
         
         setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
   

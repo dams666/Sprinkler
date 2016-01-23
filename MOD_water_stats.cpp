@@ -41,7 +41,7 @@ MOD_waterStats_::MOD_waterStats_()
     
     // The hall-effect flow sensor outputs approximately 71 pulses per second per
     // litre/minute of flow.
-    flowSensorCalibrationFactor = 71.0f;
+    flowSensorCalibrationFactor = 50.0f;
 
     incoherentPulseCount = 0;
     lastIncoherentPulseCountTime = 0;
@@ -49,8 +49,9 @@ MOD_waterStats_::MOD_waterStats_()
     flowPulseCount = 0;
     flowStatsOldTime = 0;
 
-    totalMililitresSession      = new unsigned long[MAX_CHANNELS_];
-    lastTotalMililitresSession  = new unsigned long[MAX_CHANNELS_];
+    flowRate                    = new float           [MAX_CHANNELS_];
+    totalMililitresSession      = new unsigned long   [MAX_CHANNELS_];
+    lastTotalMililitresSession  = new unsigned long   [MAX_CHANNELS_];
 
     pinMode(flowSensorPin, INPUT_PULLUP);
     
@@ -73,8 +74,9 @@ void MOD_waterStats_::reset()
 
   for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
   {
-    totalMililitresSession    [ii]  = 0;
-    lastTotalMililitresSession[ii]  = 0;               
+    flowRate                  [ii] = 0.0f;
+    totalMililitresSession    [ii] = 0;
+    lastTotalMililitresSession[ii] = 0;               
   }
 }
 
@@ -83,6 +85,7 @@ void MOD_waterStats_::start()
   waterFlow = WATER_STOPPED;
     
   // init water consumption statistics
+  flowRate                  [__curChannel] = 0.0f;
   totalMililitresSession    [__curChannel] = 0;
   lastTotalMililitresSession[__curChannel] = 0;
   
@@ -99,29 +102,28 @@ void MOD_waterStats_::show()
   
   __gui->centerText("STATISTICS");
   
-  String s;
-  s = "-Water used:";
-  s+= totalMililitresSession[__curChannel];
-  s+= " ml";
+  char str[80];
+  
+  sprintf(str,"-Water used: %d ml", totalMililitresSession[__curChannel]);
+  LCD_PRINT(0,1, str);
 
-  LCD_PRINT(0,1, s);
-    
-  s = "-Total     :";
-  s+= __channelStorage[__curChannel].waterStatsStorage.totalMililitres;
-  s+= " ml";
-
-  LCD_PRINT(0,2, s);
-
+  sprintf(str,"-Total: %d ml", __channelStorage[__curChannel].waterStatsStorage.totalMililitres);
+  LCD_PRINT(0,2, str);
+  
 }
 
 void MOD_waterStats_::printFlow() 
 {
-   String s;
-   s = "-Flow: ";
-   s+= totalMililitresSession[__curChannel];
-   s+= " ml";
+  char str[80];
+  unsigned int frac;
 
-   LCD_PRINT(0,3, s);
+  frac = (flowRate[__curChannel] - int(flowRate[__curChannel])) * 10;
+  sprintf(str,"-Flow : %d,%d L/min",int(flowRate[__curChannel]), frac);
+  LCD_PRINT(0,2, str);
+  
+  sprintf(str,"-Water used: %d ml", totalMililitresSession[__curChannel]);
+  LCD_PRINT(0,3, str);
+  
 }
 
 
@@ -145,12 +147,12 @@ void MOD_waterStats_::printFlow()
       //DEBUG_PRINTLN(flowPulseCount);
       //LCD_PRINT(0,0, flowPulseCount);
       
-      float flowRate = ((1000.0f / (newTime - flowStatsOldTime)) * flowPulseCount) / flowSensorCalibrationFactor;
+      flowRate[__curChannel] = ((1000.0f / (newTime - flowStatsOldTime)) * flowPulseCount) / flowSensorCalibrationFactor;
      
       // Divide the flow rate in litres/minute by 60 to determine how many litres have
       // passed through the sensor in this 1 second interval, then multiply by 1000 to
       // convert to millilitres.
-      unsigned int flowMilliLitres = (flowRate / 60) * 1000;
+      unsigned int flowMilliLitres = (flowRate[__curChannel] / 60) * 1000;
 
       // Add the millilitres passed in this second to the cumulative total
       totalMililitresSession[__curChannel]  += flowMilliLitres;
@@ -163,10 +165,10 @@ void MOD_waterStats_::printFlow()
 #ifdef WITH_SERIAL  
       // Print the flow rate for this second in litres / minute
       Serial.print("Flow rate: ");
-      Serial.print(int(flowRate));  // Print the integer part of the variable
+      Serial.print(int(flowRate[__curChannel]));  // Print the integer part of the variable
       Serial.print(".");             // Print the decimal point
       // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
-      frac = (flowRate - int(flowRate)) * 10;
+      frac = (flowRate[__curChannel] - int(flowRate[__curChannel])) * 10;
       Serial.print(frac, DEC) ;      // Print the fractional part of the variable
       Serial.print("L/min");
       // Print the number of litres flowed in this second
