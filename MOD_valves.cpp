@@ -34,10 +34,9 @@
 
   void MOD_valves_::reset()
   {
-    memset (state, 0, sizeof(int) * MAX_CHANNELS_);
-
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
+      state[thisPin] = 0;
       digitalWrite(pins[thisPin], RELAY_OFF);
     }
     
@@ -45,8 +44,6 @@
     digitalWrite(fertilizerPin, RELAY_OFF);
   }
 
-
-  
   int  MOD_valves_::getNbValvesOpened()
   {
     int res = 0;
@@ -57,8 +54,7 @@
   }
   
   bool MOD_valves_::changeValveState()
-  {
-    
+  {    
     if (!__channelStorage[__curChannel].active)
       return false;
              
