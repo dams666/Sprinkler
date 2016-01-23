@@ -10,8 +10,7 @@
 int                     __programState;
 unsigned long           __nextStateMillis;
 int                     __curChannel;
-String *                __msg1;
-String *                __msg2;
+String *                __msg;
 chanConf                __channelStorage[MAX_CHANNELS_];
 MOD_moistureSensors_ *  __MOD_moistureSensors;
 MOD_waterStats_ *       __MOD_waterStats;
@@ -79,8 +78,7 @@ void setNextState(int state, unsigned int delay_)
         
     __curChannel = 0;
 
-    __msg1 = new String();
-    __msg2 = new String();
+    __msg = new String();
 
     //------------------------------------------------------------------------------------ 
     // INIT GUI
@@ -121,23 +119,14 @@ void setNextState(int state, unsigned int delay_)
   {
     __MOD_valves->closeAllValves();
     __MOD_moistureSensors->setEnabled(false);
-    
-    DEBUG_PRINT("ALERT : ");
-    DEBUG_PRINTLN(*__msg1);
 
-    while(true)
+    while( __gui->readPushButton() == BP_NONE)
     {
-      if (__gui->readPushButton() != BP_NONE){break;}
-    
-      LCD_CLEAR();
-      LCD_PRINT(3,0, "=== ALERT ! ===");
-
-      LCD_PRINT(0,2, *__msg1);
-      if ((*__msg2) != "") LCD_PRINT(0,3, *__msg2);
+      __gui->displayText(*__msg, "ALERT !", false);
       
       delay(1000);
-
-          /* Attend l'appui sur un bouton */
+      LCD_CLEAR();
+      delay(1000);
     }
 
      setNextState(PRGM_STATE_INITIALIZING);
@@ -161,19 +150,17 @@ void setNextState(int state, unsigned int delay_)
       switch(__MOD_waterStats->calcFlow())
       {
         case WATER_OVERFLOW:
-          (*__msg1) = "Valve ";
-          (*__msg1) += (1 + __curChannel);
-          (*__msg1) += " : Water";
-          (*__msg2) = "overflow";
+          (*__msg) = "\nValve ";
+          (*__msg) += (1 + __curChannel);
+          (*__msg) += " : Water \noverflow";
           
           setNextState(PRGM_STATE_ALERT);
           return;
         break;
         case WATER_BLOCKED:
-          (*__msg1) = "Valve ";
-          (*__msg1) += (1 + __curChannel);
-          (*__msg1) += " : No water";
-          (*__msg2) = "";
+          (*__msg) = "\nValve ";
+          (*__msg) += (1 + __curChannel);
+          (*__msg) += " : No water";
           setNextState(PRGM_STATE_ALERT);
           return;
         break;
@@ -199,14 +186,7 @@ void setNextState(int state, unsigned int delay_)
     {
       __MOD_moistureSensors->setEnabled(false);
 
-      LCD_CLEAR();
-      LCD_PRINT(0,1, "ALL PLANTS OK !");
-      LCD_PRINT(0,3, "SLEEPING...      ");
-      
-      DEBUG_PRINTLN("SLEEPING FOR A FEW MINUTES");
-
-      //delay(5000);
-      //__gui->lcd->off();
+      __gui->displayText( "ALL PLANTS OK !\n\nSLEEPING...", "", false);
 
       setNextState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS, SLEEPING_DURATION_);
       return;
@@ -221,11 +201,21 @@ void setNextState(int state, unsigned int delay_)
  
 void sprinklerAction()
 {
-  
+  // on regarde si la tache suivante peut être exécutée
   if (millis() < __nextStateMillis)
   {
-    __gui->readPushButton();
-    delay(50);
+    Button_t button;
+    // un bouton a été activé ?
+    if ((button = __gui->readPushButton()) != BP_NONE)
+    {
+      // si aucune vanne n'est ouverte, on peut interrompre la prochaine tâche et afficher le menu principal
+      if (__MOD_valves->getNbValvesOpened() == 0  && __programState != PRGM_STATE_ALERT)
+      {
+        setNextState(PRGM_STATE_INITIALIZING);
+      }
+    } else {
+      delay(50);
+    }
     return;
   }
   

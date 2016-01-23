@@ -36,8 +36,7 @@ delay(50);
 #define DEBUG_PRINTLN(msg) 
 #endif
   
-extern String* __msg1;
-extern String* __msg2;
+extern String* __msg;
 
 class MOD_moistureSensors_;
 class MOD_waterStats_;

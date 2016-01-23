@@ -14,14 +14,15 @@ void doMainMenuAction(byte selectedMenuItem)
 
         if (getNbChannelsActivated() == 0)
         {
-          __gui->displayText("All channels are OFF");
+          __gui->displayText( "All channels are OFF");
 
         } else {
 
           __MOD_moistureSensors->reset();
           __MOD_waterStats->reset();
           __MOD_valves->reset();
-          
+
+          LCD_CLEAR();
           setNextState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
         }
         
@@ -94,19 +95,19 @@ void doConfigureMenuAction(byte selectedMenuItem)
         if (__channelStorage[selectedMenuItem].active)
         {
           sprintf(str, "Channel %i is ON", selectedMenuItem +1);
+
+          __gui->displayText(str);
+        
+          //----------------------------------------------------------------
+          // définition du max ml par session
+          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( "Max ml per session:", "ml",
+                                                                                                          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
+                                                                                                          0, 1000, 20);
         } else {
           sprintf(str, "Channel %i is OFF", selectedMenuItem +1);
         }
 
-        __gui->displayText(str);
-        
-        //----------------------------------------------------------------
-        // définition du max ml par session
-        __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( "Max ml per session:", "ml",
-                                                                                                        __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
-                                                                                                        0, 1000, 20);
-
-        __curChannel = selectedMenuItem;        
+        __curChannel = selectedMenuItem;  
         writeCurChannelStorage();
        
        setNextState(PRGM_STATE_INITIALIZING);
