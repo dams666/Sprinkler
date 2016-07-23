@@ -49,8 +49,24 @@ void doStatisticsMenuAction(byte selectedMenuItem)
       
       default:
         __curChannel = selectedMenuItem;
-        __MOD_waterStats->show();
-        while((__gui->readPushButton()) == BP_NONE){}
+
+   
+        LCD_CLEAR();
+        __gui->centerText("STATISTICS");
+
+        do
+        {
+            __MOD_moistureSensors->readValues();
+            __MOD_moistureSensors->show(1);
+
+          delay(500);
+        } while((__gui->readPushButton()) == BP_NONE);
+
+        LCD_CLEAR();
+        __gui->centerText("STATISTICS");
+        __MOD_waterStats->show(1);
+        
+        while((__gui->readPushButton()) == BP_NONE){delay(500);}
     }
 }
 
@@ -102,7 +118,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
           // définition du max ml par session
           __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( "Max ml per session:", "ml",
                                                                                                           __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
-                                                                                                          0, 1000, 20);
+                                                                                                          0, 1000, 10);
         } else {
           sprintf(str, "Channel %i is OFF", selectedMenuItem +1);
         }

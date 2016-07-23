@@ -3,10 +3,13 @@
 
 #include <arduino.h>
 #include "module.h"
-
+class Adafruit_ADS1115;
 class MOD_moistureSensors_ : public Module
 {
   public:
+
+  int *hum;
+  double *volts;
   
   int *state;             // current moistureSensorState of the machine
   int *prevState;          // previous MOD_moistureSensors.state of the machine
@@ -15,8 +18,8 @@ class MOD_moistureSensors_ : public Module
   
   int activationPin;
 
-  int *pins;
-
+   Adafruit_ADS1115 *ads;
+  
   public:
   
   MOD_moistureSensors_();
@@ -26,7 +29,7 @@ class MOD_moistureSensors_ : public Module
   void readValues();
   
   String getState(bool newState = true);
-
+  void show(int);
   void setEnabled(bool);
 };
 

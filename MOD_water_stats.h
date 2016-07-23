@@ -49,7 +49,7 @@ class MOD_waterStats_ : public Module
   void reset();
 
   void start();
-  void show();
+  void show(int);
 
   void printFlow();
 

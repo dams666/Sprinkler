@@ -2,7 +2,7 @@
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
-#define LIBCALL_ENABLEINTERRUPT
+//#define LIBCALL_ENABLEINTERRUPT
 #include <EnableInterrupt.h>
 
 void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
@@ -96,19 +96,15 @@ void MOD_waterStats_::start()
   flowStatsOldTime = millis();
 }
 
-void MOD_waterStats_::show()
-{
-  LCD_CLEAR();
-  
-  __gui->centerText("STATISTICS");
-  
+void MOD_waterStats_::show(int _row)
+{  
   char str[80];
   
   sprintf(str,"-Water used: %d ml", totalMililitresSession[__curChannel]);
-  LCD_PRINT(0,1, str);
+  LCD_PRINT(0,_row, str);
 
   sprintf(str,"-Total: %d ml", __channelStorage[__curChannel].waterStatsStorage.totalMililitres);
-  LCD_PRINT(0,2, str);
+  LCD_PRINT(0,_row + 1, str);
   
 }
 

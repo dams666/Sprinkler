@@ -2,6 +2,7 @@
 #define __MAIN_H__
 
 #include <Arduino.h>
+
 #include <Wire.h>  // Comes with Arduino IDE
 // Get the LCD I2C Library here: 
 // https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads
@@ -19,7 +20,7 @@
 #define RELAY_ON LOW
 
 #define SLEEPING_DURATION_        60000
-#define MAX_CHANNELS_             6
+#define MAX_CHANNELS_             4
   
 #ifdef WITH_SERIAL
 #define DEBUG_PRINT(msg)\

@@ -103,8 +103,8 @@
         digitalWrite(pins[__curChannel], RELAY_OFF);
 
         state[__curChannel] = 0;
-
-        __MOD_waterStats->show();
+        __gui->centerText("STATISTICS");
+        __MOD_waterStats->show(1);
          delay(1000);
       } 
     }

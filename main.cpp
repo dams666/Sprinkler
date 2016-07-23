@@ -162,6 +162,7 @@ void setNextState(int state, unsigned int delay_)
           return;
         break;
         case WATER_FLOWING:
+          __MOD_moistureSensors->show(1);
           __MOD_waterStats->printFlow();
         break;
       }
@@ -236,9 +237,7 @@ void sprinklerAction()
   
       case PRGM_STATE_READING_MOISTURE_SENSORS:
   
-        __MOD_moistureSensors->readValues();
-        
-        LCD_PRINT(0,1,__MOD_moistureSensors->getState());
+        __MOD_moistureSensors->readValues();    
         
         setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
   
