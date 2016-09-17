@@ -16,7 +16,7 @@ class MOD_valves_ : public Module
 
   int mainPin;
   int *pins;
-  int fertilizerPin;
+  //int fertilizerPin;
 
   public:
   
@@ -27,8 +27,6 @@ class MOD_valves_ : public Module
   int  getNbValvesOpened();
     
   bool changeValveState();
-  
-  void purgeTransitionalCircuit();
     
   bool openMainValve();
     

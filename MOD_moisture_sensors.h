@@ -3,11 +3,13 @@
 
 #include <arduino.h>
 #include "module.h"
+
 class Adafruit_ADS1115;
 class MOD_moistureSensors_ : public Module
 {
   public:
 
+  int *bits;
   int *hum;
   double *volts;
   
@@ -19,6 +21,8 @@ class MOD_moistureSensors_ : public Module
   int activationPin;
 
    Adafruit_ADS1115 *ads;
+
+  unsigned long nextReadMillis;
   
   public:
   
@@ -27,6 +31,9 @@ class MOD_moistureSensors_ : public Module
   void reset();
 
   void readValues();
+
+  bool hasStateChanged();
+  void updateState();
   
   String getState(bool newState = true);
   void show(int);

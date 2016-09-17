@@ -12,18 +12,19 @@ void doMainMenuAction(byte selectedMenuItem)
     {
       case 0:
 
-        if (getNbChannelsActivated() == 0)
+        if (false && getNbChannelsActivated() == 0)
         {
           __gui->displayText( "All channels are OFF");
-
+          __gui->displayMenu(MAIN_MENU);
+          
         } else {
-
+        
           __MOD_moistureSensors->reset();
           __MOD_waterStats->reset();
           __MOD_valves->reset();
 
           LCD_CLEAR();
-          setNextState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
+          setState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
         }
         
         break;
@@ -43,30 +44,35 @@ void doStatisticsMenuAction(byte selectedMenuItem)
 { 
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
-      case 7:
+      case 6:
         __gui->displayMenu(MAIN_MENU);    
         break;
       
       default:
         __curChannel = selectedMenuItem;
 
-   
+           
         LCD_CLEAR();
         __gui->centerText("STATISTICS");
 
+        __MOD_moistureSensors->setEnabled(true);
         do
         {
             __MOD_moistureSensors->readValues();
             __MOD_moistureSensors->show(1);
 
-          delay(500);
-        } while((__gui->readPushButton()) == BP_NONE);
+          delay(400);
+        } while((__gui->readPushButton()) != BP_OK);
 
+        __MOD_moistureSensors->setEnabled(false);
+        
         LCD_CLEAR();
         __gui->centerText("STATISTICS");
         __MOD_waterStats->show(1);
-        
-        while((__gui->readPushButton()) == BP_NONE){delay(500);}
+        delay(400);
+        while((__gui->readPushButton()) != BP_OK){delay(400);}
+
+        __gui->displayMenu(STATISTICS_MENU); 
     }
 }
 
@@ -126,7 +132,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         __curChannel = selectedMenuItem;  
         writeCurChannelStorage();
        
-       setNextState(PRGM_STATE_INITIALIZING);
+       setState(PRGM_STATE_INITIALIZING);
         
     }
   

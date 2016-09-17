@@ -12,17 +12,17 @@
     
     mainPin = 53;
 
-    pins[0] = 51;    
-    pins[1] = 49;
-    pins[2] = 47;
-    pins[3] = 45;
-    pins[4] = 43;
-    pins[5] = 41;
+    if (MAX_CHANNELS_>0) pins[0] = 51;    
+    if (MAX_CHANNELS_>1) pins[1] = 49;
+    if (MAX_CHANNELS_>2) pins[2] = 47;
+    if (MAX_CHANNELS_>3) pins[3] = 45;
+    if (MAX_CHANNELS_>4) pins[4] = 43;
+    if (MAX_CHANNELS_>5) pins[5] = 41;
 
-    fertilizerPin = 39;
+    //fertilizerPin = 39;
    
     pinMode(mainPin, OUTPUT);
-    pinMode(fertilizerPin, OUTPUT);
+    //pinMode(fertilizerPin, OUTPUT);
     
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
@@ -41,7 +41,7 @@
     }
     
     digitalWrite(mainPin, RELAY_OFF);
-    digitalWrite(fertilizerPin, RELAY_OFF);
+    //digitalWrite(fertilizerPin, RELAY_OFF);
   }
 
   int  MOD_valves_::getNbValvesOpened()
@@ -109,19 +109,7 @@
       } 
     }
     return true;
-  }
-
-  void MOD_valves_::purgeTransitionalCircuit()
-  {
-    LCD_PRINT(0,3, "PURGING WATER...");
-        
-    digitalWrite(pins[0], RELAY_ON); // activation de la valve
-    delay(1000);
-
-    digitalWrite(pins[0], RELAY_OFF); // fermeture de la valve   
-    delay(1000);
-  }
-  
+  }  
   bool MOD_valves_::openMainValve()
   {
      if (!__channelStorage[__curChannel].active)
@@ -131,15 +119,15 @@
 
      digitalWrite(mainPin, RELAY_ON); // activation de la valve principale
 
-     digitalWrite(fertilizerPin, RELAY_ON); // activation de la valve principale
+     //digitalWrite(fertilizerPin, RELAY_ON); // activation de la valve principale
 
      return true;
   }
   
   void MOD_valves_::closeMainValve()
   {
-    __programState = PRGM_STATE_CLOSING_MAIN_VALVE;
-
+    setState(PRGM_STATE_CLOSING_MAIN_VALVE, 0);
+    
     DEBUG_PRINTLN(" => CLOSE MAIN VALVE ");
     digitalWrite(mainPin, RELAY_OFF); // fermeture de la vanne principale
 
@@ -149,7 +137,7 @@
     
     DEBUG_PRINTLN(" WATER STOPPED");  
 
-    digitalWrite(fertilizerPin, RELAY_OFF); // activation de la valve principale
+    //digitalWrite(fertilizerPin, RELAY_OFF); // activation de la valve principale
   }
  
   void MOD_valves_::closeAllValves()

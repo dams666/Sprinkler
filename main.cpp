@@ -1,15 +1,27 @@
 #include "main.h"
 #include "menus.h"
 
+#include <SPI.h>
+#include <SD.h>
+
 #include "MOD_moisture_sensors.h"
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
+#include <Wire.h>
+#include <Time.h>
+#include <DS1307RTC.h>
+
 // -------------------------------------------------------------------------------------------------
 
 int                     __programState;
+int                     __programNextState;
+unsigned long           __stateMillis;
 unsigned long           __nextStateMillis;
 int                     __curChannel;
+
+unsigned long           __nextTimeReadTimeMillis;
+
 String *                __msg;
 chanConf                __channelStorage[MAX_CHANNELS_];
 MOD_moistureSensors_ *  __MOD_moistureSensors;
@@ -17,7 +29,10 @@ MOD_waterStats_ *       __MOD_waterStats;
 MOD_valves_ *           __MOD_valves;
 GUI *                   __gui;
 
+SDLib::File             __fileLogger;
 // -------------------------------------------------------------------------------------------------
+
+
 
 
 void readChannelStorages()
@@ -56,25 +71,54 @@ int getNbChannelsActivated()
   return res;
 }
 
-void setNextState(int state, unsigned int delay_)
+void setState(int state, unsigned int delay_)
 {
-  __programState = state;
+  __programNextState = state;
   __nextStateMillis = millis() + delay_;
 }
+
+String  print2digits(int number) {
+  String s;
+  if (number >= 0 && number < 10) {
+    s = "0";
+  }
+  s+=number;
+  return s;
+}
+
+String readTime()
+{
+  tmElements_t tm;
+  String s;
+  if (RTC.read(tm))
+  {
+    s = print2digits(tm.Hour);
+    s+=':';
+    s+=print2digits(tm.Minute);
+    s+=':';
+    s+=print2digits(tm.Second);
+  }
+  return s;
+}
+
+
 
   void sprinklerInit()
   {
     // initialize serial communication at 9600 bits per second:
-    Serial.begin(115200);
-    //#endif
+   #ifdef WITH_SERIAL
+   Serial.begin(115200);
+   #endif
   
     DEBUG_PRINTLN("--- STARTING SPRINKLER ---");
 
     //------------------------------------------------------------------------------------ 
     // INIT GLOBAL VARS
     //------------------------------------------------------------------------------------
-        
-    setNextState (PRGM_STATE_INITIALIZING);
+    __stateMillis = 0;
+    __programState = PRGM_STATE_UNDEFINED;
+    
+    setState (PRGM_STATE_INITIALIZING, 0);
         
     __curChannel = 0;
 
@@ -83,16 +127,14 @@ void setNextState(int state, unsigned int delay_)
     //------------------------------------------------------------------------------------ 
     // INIT GUI
     //------------------------------------------------------------------------------------
-    
+
     __gui = new GUI();
+
+    __gui->centerText("SPRINKLER");
     
     //------------------------------------------------------------------------------------ 
     // INIT MODULES
     //------------------------------------------------------------------------------------
-
-    // tout les canaux sont désactivés au démarrage
-    // TODO : sauvegarder l'état dans l'EEPROM
-    //eeprom_erase_all(0);
 
     readChannelStorages();
     
@@ -101,15 +143,24 @@ void setNextState(int state, unsigned int delay_)
     __MOD_valves          = new MOD_valves_();
      
     //------------------------------------------------------------------------------------ 
-    // INIT PHI_PROMPT LIBRARY
+    // INIT LOGGER
     //------------------------------------------------------------------------------------
-    
-    __gui->centerText("SPRINKLER");
 
-    __MOD_valves->purgeTransitionalCircuit();
+    //__fileLogger = new SDLib::File();
     
-    delay(2000);
+    if (!SD.begin(4))
+    {
+      (*__msg) = "SD Cart:\nInit failed! ";
+      setState(PRGM_STATE_ALERT);
+      return;
+    }
 
+    //------------------------------------------------------------------------------------ 
+    // INIT TIME
+    //------------------------------------------------------------------------------------
+
+    __nextTimeReadTimeMillis = 0;
+    
   }
 
   void alertAction()
@@ -126,55 +177,59 @@ void setNextState(int state, unsigned int delay_)
       delay(1000);
     }
 
-     setNextState(PRGM_STATE_INITIALIZING);
+     setState(PRGM_STATE_INITIALIZING);
   }
 
   void inspectForChangesAction()
   {      
-    // détection de changement d'état du moisture sensor
-    if (__channelStorage[__curChannel].active && __MOD_moistureSensors->state[__curChannel] != __MOD_moistureSensors->prevState[__curChannel]) 
+    
+    if (__channelStorage[__curChannel].active)
     {
-      __MOD_valves->changeValveState();
-    }
-    // détection de reprise suite à l'extinction d'une autre vanne
-    if (__channelStorage[__curChannel].active && __MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) 
-    {
-      __MOD_valves->changeValveState();
-    }
-
-    if (__MOD_valves->state[__curChannel]) 
-    {
-      switch(__MOD_waterStats->calcFlow())
+      
+      if ( __MOD_moistureSensors->hasStateChanged()) 
       {
-        case WATER_OVERFLOW:
-          (*__msg) = "\nValve ";
-          (*__msg) += (1 + __curChannel);
-          (*__msg) += " : Water \noverflow";
+        __MOD_valves->changeValveState();
+        
+      } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) // détection de reprise suite à l'extinction d'une autre vanne
+      {
+        __MOD_valves->changeValveState();
+      }
+      
+      __MOD_moistureSensors->updateState();
           
-          setNextState(PRGM_STATE_ALERT);
-          return;
-        break;
-        case WATER_BLOCKED:
-          (*__msg) = "\nValve ";
-          (*__msg) += (1 + __curChannel);
-          (*__msg) += " : No water";
-          setNextState(PRGM_STATE_ALERT);
-          return;
-        break;
-        case WATER_FLOWING:
-          __MOD_moistureSensors->show(1);
-          __MOD_waterStats->printFlow();
-        break;
+      if (__MOD_valves->state[__curChannel]) 
+      {
+        switch(__MOD_waterStats->calcFlow())
+        {
+          case WATER_OVERFLOW:
+            (*__msg) = "\nValve ";
+            (*__msg) += (1 + __curChannel);
+            (*__msg) += " : Water \noverflow";
+            
+            setState(PRGM_STATE_ALERT);
+            return;
+          break;
+          case WATER_BLOCKED:
+            (*__msg) = "\nValve ";
+            (*__msg) += (1 + __curChannel);
+            (*__msg) += " : No water";
+            setState(PRGM_STATE_ALERT);
+            return;
+          break;
+          case WATER_FLOWING:
+            __MOD_moistureSensors->show(1);
+            __MOD_waterStats->printFlow();
+          break;
+        }
       }
     }
 
-    __MOD_moistureSensors->prevState[__curChannel] = __MOD_moistureSensors->state[__curChannel];
     ++__curChannel;
 
     // on doit détecter les changements sur les autres vannes
     if (__curChannel < MAX_CHANNELS_ )
     {
-      setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
+      setState(PRGM_STATE_INSPECTING_FOR_CHANGES);
       return;
     } 
     __curChannel = 0;
@@ -182,47 +237,89 @@ void setNextState(int state, unsigned int delay_)
     // les vannes sont toutes fermées, et les plantes rassasiées. 
     if (__MOD_valves->getNbValvesOpened() == 0)
     {
-      __MOD_moistureSensors->setEnabled(false);
-
-      __gui->displayText( "ALL PLANTS OK !\n\nSLEEPING...", "", false);
-
-      setNextState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS, SLEEPING_DURATION_);
+      setState(PRGM_STATE_SLEEPING);
       return;
     }            
 
     // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
-    setNextState(PRGM_STATE_READING_MOISTURE_SENSORS, 500);
+    setState(PRGM_STATE_READING_MOISTURE_SENSORS, 500);
   }
 
 
- 
+
 void sprinklerAction()
 {
-  // on regarde si la tache suivante peut être exécutée
-  if (millis() < __nextStateMillis)
-  {
-    Button_t button;
-    // un bouton a été activé ?
-    if ((button = __gui->readPushButton()) != BP_NONE)
+  bool hasStateChanged = false;
+  unsigned long curMillis = millis();
+  
+    // on regarde si la tache suivante peut être exécutée
+    if (curMillis < __nextStateMillis)
     {
-      // si aucune vanne n'est ouverte, on peut interrompre la prochaine tâche et afficher le menu principal
-      if (__programState != PRGM_STATE_ALERT)
+      Button_t button;
+      // un bouton a été activé ?
+      if ((button = __gui->readPushButton()) != BP_NONE)
       {
-        __MOD_valves->closeAllValves();
-        setNextState(PRGM_STATE_INITIALIZING);
+        // si aucune vanne n'est ouverte, on peut interrompre la prochaine tâche et afficher le menu principal
+        if (__programState != PRGM_STATE_ALERT)
+        {
+          setState(PRGM_STATE_INITIALIZING);
+        }
+      } else {
+        delay(50);
       }
+      return;
+    
     } else {
-      delay(50);
+
+        if (__programState != __programNextState)
+        {
+          hasStateChanged = true;  
+          __programState = __programNextState;
+          __stateMillis = millis();
+        }
     }
-    return;
-  }
+  
+
   
   switch (__programState)
   {
       case PRGM_STATE_INITIALIZING:
         DEBUG_PRINTLN("--- INITIALIZING --- ");
-          
+
+        __MOD_valves->closeAllValves();
+        __MOD_moistureSensors->setEnabled(false);
+        
         __gui->displayMenu(MAIN_MENU);
+        
+        break;
+
+      case PRGM_STATE_SLEEPING:
+
+        if (hasStateChanged)
+        {
+          __MOD_moistureSensors->setEnabled(false);
+
+          __gui->displayText( "\n\nSLEEPING...", "", false);
+        }
+
+        Button_t button;
+        // un bouton a été activé ?
+        if ((button = __gui->readPushButton()) != BP_NONE)
+        {
+          setState(PRGM_STATE_INITIALIZING);
+        }
+
+        if (curMillis > __nextTimeReadTimeMillis)
+        {
+            LCD_PRINT(0,0,readTime());
+                    
+            __nextTimeReadTimeMillis = curMillis + 1000;
+        }
+        
+        if (curMillis - __stateMillis > SLEEPING_DURATION_)
+        {
+          setState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
+        }
         
         break;
       case PRGM_STATE_ACTIVATING_MOISTURE_SENSORS:
@@ -231,7 +328,7 @@ void sprinklerAction()
    
         __MOD_moistureSensors->setEnabled(true);
 
-        setNextState(PRGM_STATE_READING_MOISTURE_SENSORS);
+        setState(PRGM_STATE_READING_MOISTURE_SENSORS, 100);
     
         break;
   
@@ -239,7 +336,7 @@ void sprinklerAction()
   
         __MOD_moistureSensors->readValues();    
         
-        setNextState(PRGM_STATE_INSPECTING_FOR_CHANGES);
+        setState(PRGM_STATE_INSPECTING_FOR_CHANGES);
   
         break;
   

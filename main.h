@@ -19,8 +19,8 @@
 #define RELAY_OFF HIGH
 #define RELAY_ON LOW
 
-#define SLEEPING_DURATION_        60000
-#define MAX_CHANNELS_             4
+#define SLEEPING_DURATION_        10000
+#define MAX_CHANNELS_             6
   
 #ifdef WITH_SERIAL
 #define DEBUG_PRINT(msg)\
@@ -36,8 +36,14 @@ delay(50);
 #else
 #define DEBUG_PRINTLN(msg) 
 #endif
+
+namespace SDLib {
+  class File;
+};
+
   
-extern String* __msg;
+extern String*                __msg;
+extern SDLib::File           __fileLogger;
 
 class MOD_moistureSensors_;
 class MOD_waterStats_;
@@ -72,13 +78,18 @@ extern void readChannelStorages();
 extern void writeChannelStorages();
 extern void readCurChannelStorage();
 extern void writeCurChannelStorage();
+
+
+extern String readTime();
 //------------------------------------------------------------------------------------
 // PROGRAM STATE
 //------------------------------------------------------------------------------------
 
  enum  programState {
+    PRGM_STATE_UNDEFINED,
     PRGM_STATE_INITIALIZING,
     PRGM_STATE_CONFIGURE,
+    PRGM_STATE_SLEEPING,
     PRGM_STATE_ACTIVATING_MOISTURE_SENSORS,
     PRGM_STATE_READING_MOISTURE_SENSORS,
     PRGM_STATE_INSPECTING_FOR_CHANGES,
@@ -87,7 +98,11 @@ extern void writeCurChannelStorage();
   };
   
 extern int            __programState;
+extern int            __programNextState;
+extern unsigned long  __stateMillis;
 extern unsigned long  __nextStateMillis;
+
+extern unsigned long  __nextTimeReadTimeMillis;
 
   /*
   On définit un état spécifique des lors qu'il dure un certain temps
@@ -96,6 +111,8 @@ extern unsigned long  __nextStateMillis;
    
    après allumage ou reboot de l'arduino après plantage. Les vannes secondaires sont ouvertes puis refermées pour dissiper l'eau 
    qui se serait éventuellement accumulée dans les tuyaux entre la vanne princuppale et la vanne secondaire
+
+   on affiche le menu principal
    
    ETAT(S) PRECEDENT(S) :
    AUCUN
@@ -153,7 +170,7 @@ extern unsigned long  __nextStateMillis;
 
   int getNbChannelsActivated();
 
-  void setNextState(int state, unsigned int delay_ = 100);
+  void setState(int state, unsigned int delay_ = 100);
   
 #endif
 
