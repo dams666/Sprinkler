@@ -12,7 +12,7 @@ void doMainMenuAction(byte selectedMenuItem)
     {
       case 0:
 
-        if (false && getNbChannelsActivated() == 0)
+        if (getNbChannelsActivated() == 0)
         {
           __gui->displayText( "All channels are OFF");
           __gui->displayMenu(MAIN_MENU);

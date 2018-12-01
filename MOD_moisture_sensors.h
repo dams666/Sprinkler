@@ -3,23 +3,22 @@
 
 #include <arduino.h>
 #include "module.h"
+#include "config.h"
 
 class Adafruit_ADS1115;
 class MOD_moistureSensors_ : public Module
 {
   public:
 
-  int *bits;
-  int *hum;
-  double *volts;
+  int bits[MAX_CHANNELS_];
+  int hum[MAX_CHANNELS_];
+  double volts[MAX_CHANNELS_];
   
-  int *state;             // current moistureSensorState of the machine
-  int *prevState;          // previous MOD_moistureSensors.state of the machine
+  int state[MAX_CHANNELS_];             // current moistureSensorState of the machine
+  int prevState[MAX_CHANNELS_];          // previous MOD_moistureSensors.state of the machine
   
   protected:
   
-  int activationPin;
-
    Adafruit_ADS1115 *ads;
 
   unsigned long nextReadMillis;

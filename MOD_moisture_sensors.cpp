@@ -2,19 +2,20 @@
 #include "main.h"
 
 #include <Adafruit_ADS1015.h>
+
+#ifdef WITH_LOGGER
 #include <SPI.h>
 #include <SD.h>
+#endif
 
 MOD_moistureSensors_::MOD_moistureSensors_()
 {
-  activationPin = 36;  
-
-  bits      = new int[MAX_CHANNELS_];
-  hum       = new int[MAX_CHANNELS_];
-  volts     = new double[MAX_CHANNELS_];
+  //bits      = new int[MAX_CHANNELS_];
+  //hum       = new int[MAX_CHANNELS_];
+  //volts     = new double[MAX_CHANNELS_];
   
-  state     = new int[MAX_CHANNELS_];
-  prevState = new int[MAX_CHANNELS_];
+  //state     = new int[MAX_CHANNELS_];
+  //prevState = new int[MAX_CHANNELS_];
 
   memset (bits, 0, sizeof(int) * MAX_CHANNELS_);
   memset (volts, 0, sizeof(double) * MAX_CHANNELS_);
@@ -38,7 +39,7 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   // ads->setGain(GAIN_EIGHT);      // 8x gain   +/- 0.512V  1 bit = 0.25mV   0.015625mV
   // ads->setGain(GAIN_SIXTEEN);    // 16x gain  +/- 0.256V  1 bit = 0.125mV  0.0078125mV
 
-  pinMode(activationPin, OUTPUT);
+  pinMode(MOIST_SENS_PIN, OUTPUT);
 
   nextReadMillis = 0;
   setEnabled(false);
@@ -112,7 +113,8 @@ String MOD_moistureSensors_::getState(bool newState)
 
       state[thisPin] = hum[thisPin] < 80;
     }
-    
+
+    #ifdef WITH_LOGGER
     // ecriture dans le fichier de log
     if (millis() >= nextReadMillis)
     {
@@ -136,18 +138,19 @@ String MOD_moistureSensors_::getState(bool newState)
         __fileLogger.close();
       }      
     }
+    #endif
   }
   
   void MOD_moistureSensors_::setEnabled(bool enabled)
   {
     if (enabled)
     {
-      digitalWrite(activationPin, HIGH);
+      digitalWrite(MOIST_SENS_PIN, HIGH);
       delay(50);
       ads->begin();
       
     } else {
-      digitalWrite(activationPin, LOW);
+      digitalWrite(MOIST_SENS_PIN, LOW);
       delay(50);
     }
 

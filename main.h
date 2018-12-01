@@ -15,9 +15,11 @@
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL
+#undef WITH_DS1307
+#undef WITH_LOGGER
 
-#define RELAY_OFF HIGH
-#define RELAY_ON LOW
+#define VALVE_OFF LOW
+#define VALVE_ON HIGH
 
 #define SLEEPING_DURATION_        10000
 #define MAX_CHANNELS_             6
@@ -37,13 +39,14 @@ delay(50);
 #define DEBUG_PRINTLN(msg) 
 #endif
 
+#ifdef WITH_LOGGER
 namespace SDLib {
   class File;
 };
-
+extern SDLib::File           __fileLogger;
+#endif
   
 extern String*                __msg;
-extern SDLib::File           __fileLogger;
 
 class MOD_moistureSensors_;
 class MOD_waterStats_;

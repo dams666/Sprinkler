@@ -1,17 +1,20 @@
 #include "main.h"
 #include "menus.h"
 
+#ifdef WITH_LOGGER
 #include <SPI.h>
 #include <SD.h>
+#endif
 
 #include "MOD_moisture_sensors.h"
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
+#ifdef WITH_DS1307
 #include <Wire.h>
 #include <Time.h>
 #include <DS1307RTC.h>
-
+#endif
 // -------------------------------------------------------------------------------------------------
 
 int                     __programState;
@@ -29,7 +32,10 @@ MOD_waterStats_ *       __MOD_waterStats;
 MOD_valves_ *           __MOD_valves;
 GUI *                   __gui;
 
+#ifdef WITH_LOGGER
 SDLib::File             __fileLogger;
+#endif
+
 // -------------------------------------------------------------------------------------------------
 
 
@@ -88,16 +94,27 @@ String  print2digits(int number) {
 
 String readTime()
 {
-  tmElements_t tm;
   String s;
+
+#ifdef WITH_DS1307
+  tmElements_t tm;
   if (RTC.read(tm))
   {
-    s = print2digits(tm.Hour);
+    s = print2digits(tm.Day);
+    s+= '/';
+    s+= print2digits(tm.Month);
+    s+= '/';
+    s+=tmYearToCalendar(tm.Year);
+    s+=' ';
+    s+= print2digits(tm.Hour);
     s+=':';
     s+=print2digits(tm.Minute);
     s+=':';
     s+=print2digits(tm.Second);
   }
+#else
+  s = millis();
+#endif
   return s;
 }
 
@@ -128,24 +145,25 @@ String readTime()
     // INIT GUI
     //------------------------------------------------------------------------------------
 
-    __gui = new GUI();
+    __gui = new GUI(LCD_I2C_ADDR, RC_PIN);
 
     __gui->centerText("SPRINKLER");
     
     //------------------------------------------------------------------------------------ 
     // INIT MODULES
     //------------------------------------------------------------------------------------
-
+    
     readChannelStorages();
     
     __MOD_moistureSensors = new MOD_moistureSensors_();
     __MOD_waterStats      = new MOD_waterStats_();
     __MOD_valves          = new MOD_valves_();
-     
+    
     //------------------------------------------------------------------------------------ 
     // INIT LOGGER
     //------------------------------------------------------------------------------------
 
+    #ifdef WITH_LOGGER
     //__fileLogger = new SDLib::File();
     
     if (!SD.begin(4))
@@ -154,12 +172,33 @@ String readTime()
       setState(PRGM_STATE_ALERT);
       return;
     }
-
+    #endif
+    
     //------------------------------------------------------------------------------------ 
     // INIT TIME
     //------------------------------------------------------------------------------------
 
     __nextTimeReadTimeMillis = 0;
+
+#ifdef WITH_DS1307
+  tmElements_t tm;
+
+  if (!RTC.read(tm))
+  {
+    if (RTC.chipPresent())
+    {
+      (*__msg) = "DS1307 is stopped.\nRun SetTime";
+      setState(PRGM_STATE_ALERT);
+      return;
+      
+    } else {
+
+      (*__msg) = "DS1307 read error!\nCheck circuitry";
+      setState(PRGM_STATE_ALERT);
+      return;
+    }
+  }
+#endif
     
   }
 

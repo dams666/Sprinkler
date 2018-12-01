@@ -3,19 +3,17 @@
 
 #include <arduino.h> 
 #include "module.h"
-
-#define MAX_VALVES_OPENED 1
+#include "config.h"
 
 class MOD_valves_ : public Module
 {
   public:
 
-  int *state;
+  int state[MAX_CHANNELS_];
     
   protected:
 
-  int mainPin;
-  int *pins;
+  int pins[MAX_CHANNELS_];
   //int fertilizerPin;
 
   public:

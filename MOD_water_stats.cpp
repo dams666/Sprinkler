@@ -37,8 +37,7 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
 MOD_waterStats_::MOD_waterStats_() 
 {   
-    flowSensorPin       = 19; 
-    
+
     // The hall-effect flow sensor outputs approximately 71 pulses per second per
     // litre/minute of flow.
     flowSensorCalibrationFactor = 50.0f;
@@ -49,20 +48,20 @@ MOD_waterStats_::MOD_waterStats_()
     flowPulseCount = 0;
     flowStatsOldTime = 0;
 
-    flowRate                    = new float           [MAX_CHANNELS_];
-    totalMililitresSession      = new unsigned long   [MAX_CHANNELS_];
-    lastTotalMililitresSession  = new unsigned long   [MAX_CHANNELS_];
+    //flowRate                    = new float           [MAX_CHANNELS_];
+    //totalMililitresSession      = new unsigned int   [MAX_CHANNELS_];
+    //lastTotalMililitresSession  = new unsigned int   [MAX_CHANNELS_];
 
-    pinMode(flowSensorPin, INPUT_PULLUP);
+    pinMode(WATER_FLOW_PIN, INPUT_PULLUP);
     
     readCurChannelStorage();
-    
+        
     reset();
        
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    enableInterrupt(flowSensorPin, globalFlowIncPulseCounter, FALLING);
+    enableInterrupt(WATER_FLOW_PIN, globalFlowIncPulseCounter, FALLING);
 }
 
 
@@ -183,7 +182,7 @@ void MOD_waterStats_::printFlow()
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
     // state to LOW state)
-    enableInterrupt(flowSensorPin, globalFlowIncPulseCounter, FALLING);
+    enableInterrupt(WATER_FLOW_PIN, globalFlowIncPulseCounter, FALLING);
     
       //DEBUG_PRINT("diff:");
       //DEBUG_PRINTLN(diffMillilitres);

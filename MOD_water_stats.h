@@ -1,10 +1,9 @@
 #ifndef __WATER_STATS_H__
 #define __WATER_STATS_H__
 
-#define MAX_MILILITRES_PER_VALVE  50
-
 #include <Arduino.h>
 #include "module.h"
+#include "config.h"
 
 enum  waterFlow {
   WATER_FLOWING,
@@ -21,15 +20,14 @@ class MOD_waterStats_ : public Module
   
   unsigned long flowStatsOldTime;
 
-  unsigned long *totalMililitresSession;
-  unsigned long *lastTotalMililitresSession;
+  unsigned int totalMililitresSession[MAX_CHANNELS_];
+  unsigned int lastTotalMililitresSession[MAX_CHANNELS_];
 
-  float*flowRate; // in L/min
+  float flowRate[MAX_CHANNELS_]; // in L/min
   
   int waterFlow;
   
   byte flowSensorInterrupt;
-  byte flowSensorPin;
   
   float flowSensorCalibrationFactor;
   volatile byte flowPulseCount;  
