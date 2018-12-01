@@ -46,7 +46,7 @@ namespace SDLib {
 extern SDLib::File           __fileLogger;
 #endif
   
-extern String*                __msg;
+extern String                __msg;
 
 class MOD_moistureSensors_;
 class MOD_waterStats_;

@@ -10,13 +10,6 @@
 
 MOD_moistureSensors_::MOD_moistureSensors_()
 {
-  //bits      = new int[MAX_CHANNELS_];
-  //hum       = new int[MAX_CHANNELS_];
-  //volts     = new double[MAX_CHANNELS_];
-  
-  //state     = new int[MAX_CHANNELS_];
-  //prevState = new int[MAX_CHANNELS_];
-
   memset (bits, 0, sizeof(int) * MAX_CHANNELS_);
   memset (volts, 0, sizeof(double) * MAX_CHANNELS_);
   memset (hum, 0, sizeof(int) * MAX_CHANNELS_);

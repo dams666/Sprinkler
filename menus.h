@@ -2,6 +2,7 @@
 #define __MENUS_H__
 
 #include "GUI.h"
+#include <avr/pgmspace.h>
 
 // -------------------------------------------------------
 // MENU PRINCIPAL
@@ -9,12 +10,13 @@
 
 void doMainMenuAction(byte);
 
+static const char MAIN_MENU_ITEMS_1[] PROGMEM = "Start !";
+static const char MAIN_MENU_ITEMS_2[] PROGMEM = "Get statistics";
+static const char MAIN_MENU_ITEMS_3[] PROGMEM = "Configure";
+  
 /* Menu principal */
-static const char* MAIN_MENU_ITEMS[] = {
-  "Start !",
-  "Get statistics",
-  "Configure"
-};
+static const char* const MAIN_MENU_ITEMS[] PROGMEM = {MAIN_MENU_ITEMS_1, MAIN_MENU_ITEMS_2, MAIN_MENU_ITEMS_3};
+
 static const Menu_t MAIN_MENU = {
   "SPRINKLER",
   MAIN_MENU_ITEMS,
@@ -22,27 +24,24 @@ static const Menu_t MAIN_MENU = {
   &doMainMenuAction
 };
 
+static const char STATISTICS_MENU_ITEMS_CHAN_1[] PROGMEM = "Channel 1";
+static const char STATISTICS_MENU_ITEMS_CHAN_2[] PROGMEM = "Channel 2";
+static const char STATISTICS_MENU_ITEMS_CHAN_3[] PROGMEM = "Channel 3";
+static const char STATISTICS_MENU_ITEMS_CHAN_4[] PROGMEM = "Channel 4";
+static const char STATISTICS_MENU_ITEMS_CHAN_5[] PROGMEM = "Channel 5";
+static const char STATISTICS_MENU_ITEMS_CHAN_6[] PROGMEM = "Channel 6";
+
+static const char* const STATISTICS_MENU_ITEMS_CHANN[] PROGMEM = {STATISTICS_MENU_ITEMS_CHAN_1, STATISTICS_MENU_ITEMS_CHAN_2, STATISTICS_MENU_ITEMS_CHAN_3, STATISTICS_MENU_ITEMS_CHAN_4, STATISTICS_MENU_ITEMS_CHAN_5, STATISTICS_MENU_ITEMS_CHAN_6};
 
 // -------------------------------------------------------
 // SOUS MENU : STATISTICS 
 // -------------------------------------------------------
 
 void doStatisticsMenuAction(byte);
- 
-/* Sous menu pour Dr Freeman */
-static const char* STATISTICS_MENU_ITEMS[] = {
-  "Channel 1",
-  "Channel 2",
-  "Channel 3",
-  "Channel 4",
-  "Channel 5",
-  "Channel 6",
-  "Return to main"
-};
 
 static const Menu_t STATISTICS_MENU = {
   "Statistics",
-  STATISTICS_MENU_ITEMS,
+  STATISTICS_MENU_ITEMS_CHANN,
   7,
   &doStatisticsMenuAction
 };
@@ -53,20 +52,9 @@ static const Menu_t STATISTICS_MENU = {
 
 void doConfigureMenuAction(byte);
  
-/* Sous menu pour Dr Freeman */
-static const char* CONFIGURE_MENU_ITEMS[] = {
-  "Channel 1",
-  "Channel 2",
-  "Channel 3",
-  "Channel 4",
-  "Channel 5",
-  "Channel 6",
-  "Factory settings",
-  "Return to main"
-};
 static const Menu_t CONFIGURE_MENU = {
   "Configuration",
-  CONFIGURE_MENU_ITEMS,
+  STATISTICS_MENU_ITEMS_CHANN,
   8,
   &doConfigureMenuAction
 };

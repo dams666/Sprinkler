@@ -25,7 +25,7 @@ int                     __curChannel;
 
 unsigned long           __nextTimeReadTimeMillis;
 
-String *                __msg;
+String                  __msg;
 chanConf                __channelStorage[MAX_CHANNELS_];
 MOD_moistureSensors_ *  __MOD_moistureSensors;
 MOD_waterStats_ *       __MOD_waterStats;
@@ -139,8 +139,6 @@ String readTime()
         
     __curChannel = 0;
 
-    __msg = new String();
-
     //------------------------------------------------------------------------------------ 
     // INIT GUI
     //------------------------------------------------------------------------------------
@@ -168,7 +166,7 @@ String readTime()
     
     if (!SD.begin(4))
     {
-      (*__msg) = "SD Cart:\nInit failed! ";
+      __msg = "SD Cart:\nInit failed! ";
       setState(PRGM_STATE_ALERT);
       return;
     }
@@ -187,13 +185,13 @@ String readTime()
   {
     if (RTC.chipPresent())
     {
-      (*__msg) = "DS1307 is stopped.\nRun SetTime";
+      __msg = "DS1307 is stopped.\nRun SetTime";
       setState(PRGM_STATE_ALERT);
       return;
       
     } else {
 
-      (*__msg) = "DS1307 read error!\nCheck circuitry";
+      __msg = "DS1307 read error!\nCheck circuitry";
       setState(PRGM_STATE_ALERT);
       return;
     }
@@ -209,7 +207,7 @@ String readTime()
 
     while( __gui->readPushButton() == BP_NONE)
     {
-      __gui->displayText(*__msg, "ALERT !", false);
+      __gui->displayText(__msg, "ALERT !", false);
       
       delay(1000);
       LCD_CLEAR();
@@ -241,17 +239,17 @@ String readTime()
         switch(__MOD_waterStats->calcFlow())
         {
           case WATER_OVERFLOW:
-            (*__msg) = "\nValve ";
-            (*__msg) += (1 + __curChannel);
-            (*__msg) += " : Water \noverflow";
+            __msg = "\nValve ";
+            __msg += (1 + __curChannel);
+            __msg += " : Water \noverflow";
             
             setState(PRGM_STATE_ALERT);
             return;
           break;
           case WATER_BLOCKED:
-            (*__msg) = "\nValve ";
-            (*__msg) += (1 + __curChannel);
-            (*__msg) += " : No water";
+            __msg = "\nValve ";
+            __msg += (1 + __curChannel);
+            __msg += " : No water";
             setState(PRGM_STATE_ALERT);
             return;
           break;

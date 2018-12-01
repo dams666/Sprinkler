@@ -5,9 +5,6 @@
 
   MOD_valves_::MOD_valves_()
   { 
-    //state = new int[MAX_CHANNELS_];
-    //pins = new int[MAX_CHANNELS_];
-
     memset (pins, 0, sizeof(int) * MAX_CHANNELS_);
     
     if (MAX_CHANNELS_>0) pins[0] = VALVE_1_PIN;    
