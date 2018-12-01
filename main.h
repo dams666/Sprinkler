@@ -15,6 +15,7 @@
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL
+//#define WITH_DS1307
 #undef WITH_DS1307
 #undef WITH_LOGGER
 

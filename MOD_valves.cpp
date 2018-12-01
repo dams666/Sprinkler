@@ -5,7 +5,7 @@
 
   MOD_valves_::MOD_valves_()
   { 
-    memset (pins, 0, sizeof(int) * MAX_CHANNELS_);
+    memset (pins, 0, sizeof(short) * MAX_CHANNELS_);
     
     if (MAX_CHANNELS_>0) pins[0] = VALVE_1_PIN;    
     if (MAX_CHANNELS_>1) pins[1] = VALVE_2_PIN;
@@ -98,7 +98,7 @@
         digitalWrite(pins[__curChannel], VALVE_OFF);
 
         state[__curChannel] = 0;
-        __gui->centerText("STATISTICS");
+        __gui->centerText(F("STATISTICS"));
         __MOD_waterStats->show(1);
          delay(1000);
       } 

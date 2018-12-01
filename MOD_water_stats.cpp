@@ -159,22 +159,22 @@ void MOD_waterStats_::printFlow()
 
 #ifdef WITH_SERIAL  
       // Print the flow rate for this second in litres / minute
-      Serial.print("Flow rate: ");
+      Serial.print(F("Flow rate: "));
       Serial.print(int(flowRate[__curChannel]));  // Print the integer part of the variable
-      Serial.print(".");             // Print the decimal point
+      Serial.print(F("."));             // Print the decimal point
       // Determine the fractional part. The 10 multiplier gives us 1 decimal place.
       frac = (flowRate[__curChannel] - int(flowRate[__curChannel])) * 10;
       Serial.print(frac, DEC) ;      // Print the fractional part of the variable
-      Serial.print("L/min");
+      Serial.print(F("L/min"));
       // Print the number of litres flowed in this second
-      Serial.print("  Current Liquid Flowing: ");             // Output separator
+      Serial.print(F("  Current Liquid Flowing: "));             // Output separator
       Serial.print(flowMilliLitres);
-      Serial.print("mL/Sec");
+      Serial.print(F("mL/Sec"));
 
       // Print the cumulative total of litres flowed since starting
-      Serial.print("  Output Liquid Quantity: ");             // Output separator
+      Serial.print(F("  Output Liquid Quantity: "));             // Output separator
       Serial.print(lastTotalMililitresSession[__curChannel]);
-      Serial.println("mL"); 
+      Serial.println(F("mL")); 
       delay(40);
 #endif
       

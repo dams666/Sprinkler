@@ -14,7 +14,7 @@ void doMainMenuAction(byte selectedMenuItem)
 
         if (getNbChannelsActivated() == 0)
         {
-          __gui->displayText( "All channels are OFF");
+          __gui->displayText( F("All channels are OFF"), NULL);
           __gui->displayMenu(MAIN_MENU);
           
         } else {
@@ -53,7 +53,7 @@ void doStatisticsMenuAction(byte selectedMenuItem)
 
            
         LCD_CLEAR();
-        __gui->centerText("STATISTICS");
+        __gui->centerText(F("STATISTICS"));
 
         __MOD_moistureSensors->setEnabled(true);
         do
@@ -67,7 +67,7 @@ void doStatisticsMenuAction(byte selectedMenuItem)
         __MOD_moistureSensors->setEnabled(false);
         
         LCD_CLEAR();
-        __gui->centerText("STATISTICS");
+        __gui->centerText(F("STATISTICS"));
         __MOD_waterStats->show(1);
         delay(400);
         while((__gui->readPushButton()) != BP_OK){delay(400);}
@@ -96,7 +96,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
 
           writeChannelStorages();
           
-          __gui->displayText("Factory settings \nrestored!");
+          __gui->displayText(F("Factory settings \nrestored!"), NULL);
                   
         break;
       case 7:
@@ -108,7 +108,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         //----------------------------------------------------------------
         // Activation de la vanne
       
-        __channelStorage[selectedMenuItem].active = __gui->displayYNPrompt("ACTIVATE ?", __channelStorage[selectedMenuItem].active); 
+        __channelStorage[selectedMenuItem].active = __gui->displayYNPrompt(F("ACTIVATE ?"), __channelStorage[selectedMenuItem].active); 
           
         LCD_CLEAR();
       
@@ -122,7 +122,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         
           //----------------------------------------------------------------
           // définition du max ml par session
-          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( "Max ml per session:", "ml",
+          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( F("Max ml per session:"), F("ml"),
                                                                                                           __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
                                                                                                           0, 1000, 10);
         } else {

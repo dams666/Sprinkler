@@ -14,8 +14,8 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   memset (volts, 0, sizeof(double) * MAX_CHANNELS_);
   memset (hum, 0, sizeof(int) * MAX_CHANNELS_);
   
-  memset (state, 0, sizeof(int) * MAX_CHANNELS_);
-  memset (prevState, 0, sizeof(int) * MAX_CHANNELS_);
+  memset (state, 0, sizeof(bool) * MAX_CHANNELS_);
+  memset (prevState, 0, sizeof(bool) * MAX_CHANNELS_);
 
   ads = new Adafruit_ADS1115 (0x4A);  /* Use this for the 16-bit version */
 

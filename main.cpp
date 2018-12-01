@@ -145,7 +145,9 @@ String readTime()
 
     __gui = new GUI(LCD_I2C_ADDR, RC_PIN);
 
-    __gui->centerText("SPRINKLER");
+    __gui->centerText(F("SPRINKLER"));
+
+    pinMode(BUZZER_PIN, OUTPUT);
     
     //------------------------------------------------------------------------------------ 
     // INIT MODULES
@@ -207,15 +209,18 @@ String readTime()
 
     while( __gui->readPushButton() == BP_NONE)
     {
-      __gui->displayText(__msg, "ALERT !", false);
-      
+      digitalWrite(BUZZER_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+      __gui->displayText(__msg, F("ALERT !"), false);
       delay(1000);
+      
+      digitalWrite(BUZZER_PIN, LOW);   // turn the LED on (HIGH is the voltage level)
       LCD_CLEAR();
       delay(1000);
     }
 
      setState(PRGM_STATE_INITIALIZING);
   }
+
 
   void inspectForChangesAction()
   {      
@@ -336,7 +341,7 @@ void sprinklerAction()
         {
           __MOD_moistureSensors->setEnabled(false);
 
-          __gui->displayText( "\n\nSLEEPING...", "", false);
+          __gui->displayText( F("\n\nSLEEPING..."), NULL, false);
         }
 
         Button_t button;

@@ -14,8 +14,8 @@ class MOD_moistureSensors_ : public Module
   int hum[MAX_CHANNELS_];
   double volts[MAX_CHANNELS_];
   
-  int state[MAX_CHANNELS_];             // current moistureSensorState of the machine
-  int prevState[MAX_CHANNELS_];          // previous MOD_moistureSensors.state of the machine
+  bool state[MAX_CHANNELS_];             // current moistureSensorState of the machine
+  bool prevState[MAX_CHANNELS_];          // previous MOD_moistureSensors.state of the machine
   
   protected:
   

@@ -10,6 +10,8 @@
 #define LCD_I2C_ADDR 0x3F
 #define RC_PIN 5
 
+#define BUZZER_PIN LED_BUILTIN
+
 //------------------------------------
 // MOISTURE SENSORS MODULE
 //------------------------------------

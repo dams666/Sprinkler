@@ -9,11 +9,11 @@ class MOD_valves_ : public Module
 {
   public:
 
-  int state[MAX_CHANNELS_];
+  bool state[MAX_CHANNELS_];
     
   protected:
 
-  int pins[MAX_CHANNELS_];
+  short pins[MAX_CHANNELS_];
   //int fertilizerPin;
 
   public:
