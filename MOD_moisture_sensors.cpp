@@ -48,16 +48,16 @@ void MOD_moistureSensors_::show(int _row)
 {
     String str;
     
-    str = "-Hum : ";
+    str = F("-Hum : ");
     
     if (true) //__channelStorage[__curChannel].active)
     {
        str += hum[__curChannel]; 
-       str += "% (";
+       str += F("% (");
        str += volts[__curChannel]; 
-       str += "V)   ";
+       str += F("V)   ");
     } else {
-        str += "- ";
+        str += F("- ");
     }
     
     LCD_PRINT(0,_row, str);    
@@ -76,7 +76,7 @@ void MOD_moistureSensors_::updateState()
 String MOD_moistureSensors_::getState(bool newState)
 {
     String str;
-    str+="-Hum : [";
+    str+= F("-Hum : [");
 
     for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     { 
@@ -84,10 +84,10 @@ String MOD_moistureSensors_::getState(bool newState)
       {
         str += newState ? state[ii] : prevState[ii];; 
       } else {
-        str += "-";
+        str += F("-");
       }
     }    
-    str+="]";
+    str+= F("]");
     return str;
   }
 

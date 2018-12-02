@@ -24,7 +24,7 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
       
       if (incoherentPulseCount > 40)
       {
-        __msg = "water is flowing but\nvalves are closed!"; 
+        __msg = F("water is flowing but\nvalves are closed!"); 
         __programState = PRGM_STATE_ALERT;
       }    
     } 
@@ -99,10 +99,10 @@ void MOD_waterStats_::show(int _row)
 {  
   char str[80];
   
-  sprintf(str,"-Water used: %d ml", totalMililitresSession[__curChannel]);
+  sprintf_P(str,PSTR("-Water used: %d ml"), totalMililitresSession[__curChannel]);
   LCD_PRINT(0,_row, str);
 
-  sprintf(str,"-Total: %d ml", __channelStorage[__curChannel].waterStatsStorage.totalMililitres);
+  sprintf_P(str,PSTR("-Total: %d ml"), __channelStorage[__curChannel].waterStatsStorage.totalMililitres);
   LCD_PRINT(0,_row + 1, str);
   
 }
@@ -113,10 +113,10 @@ void MOD_waterStats_::printFlow()
   unsigned int frac;
 
   frac = (flowRate[__curChannel] - int(flowRate[__curChannel])) * 10;
-  sprintf(str,"-Flow : %d,%d L/min",int(flowRate[__curChannel]), frac);
+  sprintf_P(str,PSTR("-Flow : %d,%d L/min"),int(flowRate[__curChannel]), frac);
   LCD_PRINT(0,2, str);
   
-  sprintf(str,"-Water used: %d ml", totalMililitresSession[__curChannel]);
+  sprintf_P(str,PSTR("-Water used: %d ml"), totalMililitresSession[__curChannel]);
   LCD_PRINT(0,3, str);
   
 }

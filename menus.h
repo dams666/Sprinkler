@@ -2,7 +2,6 @@
 #define __MENUS_H__
 
 #include "GUI.h"
-#include <avr/pgmspace.h>
 
 static const char GEN_MENU_ITEMS_CHAN_1[] PROGMEM = "Channel 1";
 static const char GEN_MENU_ITEMS_CHAN_2[] PROGMEM = "Channel 2";

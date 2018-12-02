@@ -57,13 +57,13 @@
     {
       if (getNbValvesOpened() < MAX_VALVES_OPENED && !state[__curChannel] )
       {
-        DEBUG_PRINT(" => OPEN VALVE ");
+        DEBUG_PRINT(F(" => OPEN VALVE "));
         DEBUG_PRINTLN(__curChannel);
 
         String s;
-        s = "VALVE ";
+        s = F("VALVE ");
         s+= (1 + __curChannel);
-        s+= " OPENED";
+        s+= F(" OPENED");
 
         LCD_CLEAR();
         LCD_PRINT(0,0,s);
@@ -81,13 +81,13 @@
 
       if (state[__curChannel]) 
       {  
-        DEBUG_PRINT(" => CLOSE VALVE ");
+        DEBUG_PRINT(F(" => CLOSE VALVE "));
         DEBUG_PRINTLN(1 + __curChannel);
         
         String s;
-        s = "VALVE ";
+        s = F("VALVE ");
         s+= (1 + __curChannel);
-        s+= " CLOSED";
+        s+= F(" CLOSED");
 
         LCD_PRINT(0,0,s);
               
@@ -123,14 +123,14 @@
   {
     setState(PRGM_STATE_CLOSING_MAIN_VALVE, 0);
     
-    DEBUG_PRINTLN(" => CLOSE MAIN VALVE ");
+    DEBUG_PRINTLN(F(" => CLOSE MAIN VALVE "));
     digitalWrite(VALVE_M_PIN, VALVE_OFF); // fermeture de la vanne principale
 
     // on laisse le temps a l'eau de s'�couler, et de faire baisser la pression dans les tuyaux
     while(__MOD_waterStats->calcFlow() == WATER_FLOWING)
       delay(500);
     
-    DEBUG_PRINTLN(" WATER STOPPED");  
+    DEBUG_PRINTLN(F(" WATER STOPPED"));  
 
     //digitalWrite(fertilizerPin, VALVE_OFF); // activation de la valve principale
   }

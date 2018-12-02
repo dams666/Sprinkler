@@ -2,7 +2,6 @@
 
 #include <LiquidCrystal_I2C.h>
 #include <IRremote.h>
-#include <avr/pgmspace.h>
 
 GUI::GUI(uint8_t lcd_i2c_addr, uint8_t rc_pin)
 {
@@ -195,9 +194,9 @@ int GUI::displayIntPrompt(const __FlashStringHelper* msg, const __FlashStringHel
     if (value <min) value = min;
     
     txt = value;
-    txt += " ";
+    txt += F(" ");
     txt += unit;
-    txt += "   ";
+    txt += F("   ");
     
     lcd->setCursor(6, 2);
     lcd->print(txt);
@@ -256,16 +255,16 @@ bool GUI::displayYNPrompt(const __FlashStringHelper * msg, bool dftYes)
     /* Gére l'appui sur le bouton */
     switch(buttonPressed)
     {
-      case BP_UP: // Bouton haut = choix précédent 
-      case BP_DOWN: // Bouton bas = choix suivant
+      case BP_UP:
+      case BP_DOWN:
+      case BP_LEFT:
+      case BP_RIGHT:
         isYes = !isYes;
         break;
-   
-      case BP_CANCEL: // Bouton gauche = sorti du menu
+      case BP_CANCEL:
         shouldExitMenu = true;
         break;
-   
-      case BP_OK: //
+      case BP_OK:
         shouldExitMenu = true;
         break;
      }
@@ -311,7 +310,7 @@ void GUI::displayMenu(const Menu_t &menu)
       
       lcd->setCursor(0, ii + 1);
       msg = itemArr + 1;
-      msg += itemArr == selectedMenuItem ? ")>" : ") ";
+      msg += itemArr == selectedMenuItem ? F(")>") : F(") ");
     
     strcpy_P(buffer, (char*)pgm_read_word(menu.items + itemArr ));
       //msg +=  menu.items[ itemArr ];

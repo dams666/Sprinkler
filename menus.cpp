@@ -14,7 +14,7 @@ void doMainMenuAction(byte selectedMenuItem)
 
         if (getNbChannelsActivated() == 0)
         {
-          __gui->displayText( F("All channels are OFF"), NULL);
+          __gui->displayText( F("All channels are OFF"));
           __gui->displayMenu(MAIN_MENU);
           
         } else {
@@ -116,8 +116,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
       
         if (__channelStorage[selectedMenuItem].active)
         {
-          sprintf(str, "Channel %i is ON", selectedMenuItem +1);
-
+          sprintf_P(str, PSTR("Channel %i is ON"), selectedMenuItem +1);
           __gui->displayText(str);
         
           //----------------------------------------------------------------
@@ -126,7 +125,8 @@ void doConfigureMenuAction(byte selectedMenuItem)
                                                                                                           __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
                                                                                                           0, 1000, 10);
         } else {
-          sprintf(str, "Channel %i is OFF", selectedMenuItem +1);
+          sprintf_P(str, PSTR("Channel %i is OFF"), selectedMenuItem +1);
+          __gui->displayText(str);
         }
 
         __curChannel = selectedMenuItem;  

@@ -127,7 +127,7 @@ String readTime()
    Serial.begin(115200);
    #endif
   
-    DEBUG_PRINTLN("--- STARTING SPRINKLER ---");
+    DEBUG_PRINTLN(F("--- STARTING SPRINKLER ---"));
 
     //------------------------------------------------------------------------------------ 
     // INIT GLOBAL VARS
@@ -168,7 +168,7 @@ String readTime()
     
     if (!SD.begin(4))
     {
-      __msg = "SD Cart:\nInit failed! ";
+      __msg = F("SD Cart:\nInit failed! ");
       setState(PRGM_STATE_ALERT);
       return;
     }
@@ -187,13 +187,13 @@ String readTime()
   {
     if (RTC.chipPresent())
     {
-      __msg = "DS1307 is stopped.\nRun SetTime";
+      __msg = F("DS1307 is stopped.\nRun SetTime");
       setState(PRGM_STATE_ALERT);
       return;
       
     } else {
 
-      __msg = "DS1307 read error!\nCheck circuitry";
+      __msg = F("DS1307 read error!\nCheck circuitry");
       setState(PRGM_STATE_ALERT);
       return;
     }
@@ -244,17 +244,17 @@ String readTime()
         switch(__MOD_waterStats->calcFlow())
         {
           case WATER_OVERFLOW:
-            __msg = "\nValve ";
+            __msg = F("\nValve ");
             __msg += (1 + __curChannel);
-            __msg += " : Water \noverflow";
+            __msg += F(" : Water \noverflow");
             
             setState(PRGM_STATE_ALERT);
             return;
           break;
           case WATER_BLOCKED:
-            __msg = "\nValve ";
+            __msg = F("\nValve ");
             __msg += (1 + __curChannel);
-            __msg += " : No water";
+            __msg += F(" : No water");
             setState(PRGM_STATE_ALERT);
             return;
           break;
@@ -326,7 +326,7 @@ void sprinklerAction()
   switch (__programState)
   {
       case PRGM_STATE_INITIALIZING:
-        DEBUG_PRINTLN("--- INITIALIZING --- ");
+        DEBUG_PRINTLN(F("--- INITIALIZING --- "));
 
         __MOD_valves->closeAllValves();
         __MOD_moistureSensors->setEnabled(false);
@@ -366,7 +366,7 @@ void sprinklerAction()
         break;
       case PRGM_STATE_ACTIVATING_MOISTURE_SENSORS:
  
-        DEBUG_PRINTLN("--- ACTIVATING MOISTURE SENSORS ---");
+        DEBUG_PRINTLN(F("--- ACTIVATING MOISTURE SENSORS ---"));
    
         __MOD_moistureSensors->setEnabled(true);
 
