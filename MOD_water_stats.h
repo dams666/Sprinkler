@@ -27,8 +27,6 @@ class MOD_waterStats_ : public Module
   
   int waterFlow;
   
-  byte flowSensorInterrupt;
-  
   float flowSensorCalibrationFactor;
   volatile byte flowPulseCount;  
     

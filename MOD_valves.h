@@ -28,9 +28,9 @@ class MOD_valves_ : public Module
     
   bool openMainValve();
     
-  void closeMainValve();
+  bool closeMainValve();
    
-  void closeAllValves();
+  bool closeAllValves();
 
 };
 

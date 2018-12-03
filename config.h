@@ -2,6 +2,15 @@
 #define __CONFIG_H__
 
 #define MAX_CHANNELS_ 6
+#define SLEEPING_DURATION_        10000
+
+//#define WITH_SERIAL
+#undef WITH_SERIAL
+//#define WITH_DS1307
+#undef WITH_DS1307
+#undef WITH_LOGGER
+
+#define BUZZER_PIN LED_BUILTIN
 
 //------------------------------------
 // GUI
@@ -9,8 +18,6 @@
 
 #define LCD_I2C_ADDR 0x3F
 #define RC_PIN 5
-
-#define BUZZER_PIN LED_BUILTIN
 
 //------------------------------------
 // MOISTURE SENSORS MODULE

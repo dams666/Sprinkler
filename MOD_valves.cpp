@@ -119,29 +119,35 @@
      return true;
   }
   
-  void MOD_valves_::closeMainValve()
+  bool MOD_valves_::closeMainValve()
   {
     setState(PRGM_STATE_CLOSING_MAIN_VALVE, 0);
     
     DEBUG_PRINTLN(F(" => CLOSE MAIN VALVE "));
     digitalWrite(VALVE_M_PIN, VALVE_OFF); // fermeture de la vanne principale
 
-    // on laisse le temps a l'eau de s'�couler, et de faire baisser la pression dans les tuyaux
-    while(__MOD_waterStats->calcFlow() == WATER_FLOWING)
+    int attempts = 0;
+    // on laisse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
+    while(__MOD_waterStats->calcFlow() == WATER_FLOWING) {
+      attempts++;
+      if (attempts > 20)
+        return false;
       delay(500);
-    
-    DEBUG_PRINTLN(F(" WATER STOPPED"));  
-
-    //digitalWrite(fertilizerPin, VALVE_OFF); // activation de la valve principale
+    }
+    DEBUG_PRINTLN(F(" WATER STOPPED"));   
+    return true;  
   }
  
-  void MOD_valves_::closeAllValves()
+  bool MOD_valves_::closeAllValves()
   {
-    closeMainValve();
+    if (!closeMainValve())
+      return false;
 
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
+      state[thisPin] = 0;
       digitalWrite(pins[thisPin], VALVE_OFF); // fermeture de la valve
-    }    
+    }
+    return true;
   }
 

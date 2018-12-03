@@ -15,22 +15,24 @@
 #include <Time.h>
 #include <DS1307RTC.h>
 #endif
+
 // -------------------------------------------------------------------------------------------------
 
-int                     __programState;
-int                     __programNextState;
-unsigned long           __stateMillis;
-unsigned long           __nextStateMillis;
-int                     __curChannel;
+volatile byte                    __programState;
+volatile byte                    __programNextState;
+volatile unsigned long          __stateMillis;
+volatile unsigned long          __nextStateMillis;
+String                 __msg;
 
-unsigned long           __nextTimeReadTimeMillis;
+int                             __curChannel;
 
-String                  __msg;
-chanConf                __channelStorage[MAX_CHANNELS_];
-MOD_moistureSensors_ *  __MOD_moistureSensors;
-MOD_waterStats_ *       __MOD_waterStats;
-MOD_valves_ *           __MOD_valves;
-GUI *                   __gui;
+unsigned long                   __nextTimeReadTimeMillis;
+
+chanConf               __channelStorage[MAX_CHANNELS_];
+MOD_moistureSensors_ * __MOD_moistureSensors;
+MOD_waterStats_ *      __MOD_waterStats;
+MOD_valves_ *          __MOD_valves;
+GUI *                  __gui;
 
 #ifdef WITH_LOGGER
 SDLib::File             __fileLogger;
@@ -81,6 +83,19 @@ void setState(int state, unsigned int delay_)
 {
   __programNextState = state;
   __nextStateMillis = millis() + delay_;
+}
+
+bool isAlertState()
+{
+  bool _alert = false;
+
+  //désactivation de l'interrupt
+  /*
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    _alert = __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;
+  }*/
+  
+  return __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;;
 }
 
 String  print2digits(int number) {
@@ -204,7 +219,9 @@ String readTime()
 
   void alertAction()
   {
-    __MOD_valves->closeAllValves();
+    if (!__MOD_valves->closeAllValves()) {
+      __msg = F("Main valve KO!");
+    }
     __MOD_moistureSensors->setEnabled(false);
 
     while( __gui->readPushButton() == BP_NONE)
@@ -293,25 +310,27 @@ void sprinklerAction()
 {
   bool hasStateChanged = false;
   unsigned long curMillis = millis();
-  
+  bool _doTaskWait;
+  Button_t button;
+
+  // TODO : désactiver l'interrupt ? il est susceptible de modifier __nextStateMillis (mais peu mrobable)
+  _doTaskWait = curMillis < __nextStateMillis;
+   
     // on regarde si la tache suivante peut être exécutée
-    if (curMillis < __nextStateMillis)
+    if (_doTaskWait)
     {
-      Button_t button;
-      // un bouton a été activé ?
-      if ((button = __gui->readPushButton()) != BP_NONE)
+      if (__programState == PRGM_STATE_SLEEPING)
       {
-        // si aucune vanne n'est ouverte, on peut interrompre la prochaine tâche et afficher le menu principal
-        if (__programState != PRGM_STATE_ALERT)
+        // Mode sommeil: un bouton a été activé ?
+        if ((button = __gui->readPushButton()) != BP_NONE)
         {
-          setState(PRGM_STATE_INITIALIZING);
+            setState(PRGM_STATE_INITIALIZING);
         }
-      } else {
-        delay(50);
       }
+      delay(50);
       return;
-    
-    } else {
+
+    } else { // execution de la nouvelle tâche
 
         if (__programState != __programNextState)
         {
@@ -329,6 +348,7 @@ void sprinklerAction()
         DEBUG_PRINTLN(F("--- INITIALIZING --- "));
 
         __MOD_valves->closeAllValves();
+        setState(PRGM_STATE_INITIALIZING); // la fonction close AllValves a modifié l'état 
         __MOD_moistureSensors->setEnabled(false);
         
         __gui->displayMenu(MAIN_MENU);
@@ -336,7 +356,8 @@ void sprinklerAction()
         break;
 
       case PRGM_STATE_SLEEPING:
-
+      
+        // entrée dans l'état de sommeil
         if (hasStateChanged)
         {
           __MOD_moistureSensors->setEnabled(false);
@@ -350,14 +371,15 @@ void sprinklerAction()
         {
           setState(PRGM_STATE_INITIALIZING);
         }
-
+        
+        // affichage de l'horloge
         if (curMillis > __nextTimeReadTimeMillis)
         {
             LCD_PRINT(0,0,readTime());
                     
             __nextTimeReadTimeMillis = curMillis + 1000;
         }
-        
+        // sortie de l'état de sommeil
         if (curMillis - __stateMillis > SLEEPING_DURATION_)
         {
           setState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);

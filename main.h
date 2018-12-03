@@ -12,18 +12,10 @@
 #include "Eepromutil.h"
 
 #include "GUI.h"
-
-//#define WITH_SERIAL
-#undef WITH_SERIAL
-//#define WITH_DS1307
-#undef WITH_DS1307
-#undef WITH_LOGGER
+#include "config.h"
 
 #define VALVE_OFF LOW
 #define VALVE_ON HIGH
-
-#define SLEEPING_DURATION_        10000
-#define MAX_CHANNELS_             6
   
 #ifdef WITH_SERIAL
 #define DEBUG_PRINT(msg)\
@@ -85,28 +77,28 @@ extern void writeCurChannelStorage();
 
 
 extern String readTime();
-//------------------------------------------------------------------------------------
-// PROGRAM STATE
-//------------------------------------------------------------------------------------
 
  enum  programState {
-    PRGM_STATE_UNDEFINED,
-    PRGM_STATE_INITIALIZING,
-    PRGM_STATE_CONFIGURE,
-    PRGM_STATE_SLEEPING,
-    PRGM_STATE_ACTIVATING_MOISTURE_SENSORS,
-    PRGM_STATE_READING_MOISTURE_SENSORS,
-    PRGM_STATE_INSPECTING_FOR_CHANGES,
-    PRGM_STATE_CLOSING_MAIN_VALVE,
-    PRGM_STATE_ALERT
+    PRGM_STATE_UNDEFINED = 0,
+    PRGM_STATE_INITIALIZING = 1,
+    PRGM_STATE_CONFIGURE = 2,
+    PRGM_STATE_SLEEPING = 3,
+    PRGM_STATE_ACTIVATING_MOISTURE_SENSORS = 4,
+    PRGM_STATE_READING_MOISTURE_SENSORS = 5,
+    PRGM_STATE_INSPECTING_FOR_CHANGES = 6,
+    PRGM_STATE_CLOSING_MAIN_VALVE = 7,
+    PRGM_STATE_ALERT = 8
   };
   
-extern int            __programState;
-extern int            __programNextState;
-extern unsigned long  __stateMillis;
-extern unsigned long  __nextStateMillis;
+extern volatile byte             __programState;
+extern volatile byte             __programNextState;
+// ON définit un byte pour éviter les problèmes d'interférence avec l'interrupt
+// cf: https://www.arduino.cc/reference/en/language/variables/variable-scope--qualifiers/volatile/
 
-extern unsigned long  __nextTimeReadTimeMillis;
+extern volatile unsigned long   __stateMillis;
+extern volatile unsigned long   __nextStateMillis;
+
+extern unsigned long   __nextTimeReadTimeMillis;
 
   /*
   On définit un état spécifique des lors qu'il dure un certain temps
@@ -175,6 +167,7 @@ extern unsigned long  __nextTimeReadTimeMillis;
   int getNbChannelsActivated();
 
   void setState(int state, unsigned int delay_ = 100);
-  
+
+  bool isAlertState();
 #endif
 
