@@ -12,7 +12,7 @@
 
 #ifdef WITH_DS1307
 #include <Wire.h>
-#include <Time.h>
+#include <TimeLib.h>
 #include <DS1307RTC.h>
 #endif
 
@@ -28,7 +28,7 @@ action_t array_actions[PRGM_STATE_NB];
 
 String                 __msg;
 
-int                             __curChannel;
+
 
 
 chanConf               __channelStorage[MAX_CHANNELS_];
@@ -41,6 +41,10 @@ GUI *                  __gui;
 SDLib::File             __fileLogger;
 #endif
 
+// variables locales
+int                    __curChannel;
+unsigned long          __nextTimeReadTimeMillis;
+unsigned long          __curMillis;
 // -------------------------------------------------------------------------------------------------
 
 
@@ -144,7 +148,7 @@ String readTime()
 
     __MOD_valves->closeAllValves();
     __MOD_moistureSensors->setEnabled(false);
-        
+
     __gui->displayMenu(MAIN_MENU);
 
   }
@@ -166,18 +170,18 @@ String readTime()
       setProgramAction(PRGM_STATE_INITIALIZING);
       return;
     }
-    /*
+    
     // affichage de l'horloge
-    if (curMillis > __nextTimeReadTimeMillis)
+    if (__curMillis >= __nextTimeReadTimeMillis)
     {
       LCD_PRINT(0,0,readTime());
                     
-      __nextTimeReadTimeMillis = curMillis + 1000;
+      __nextTimeReadTimeMillis = __curMillis + 1000;
     }
-    */
+    
     
     // sortie de l'état de sommeil
-    if (millis() - __programStateMillis > SLEEPING_DURATION_)
+    if (__curMillis - __programStateMillis >= SLEEPING_DURATION_)
     {
       setProgramAction(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
       return;
@@ -309,9 +313,10 @@ String readTime()
     array_actions[PRGM_STATE_READING_MOISTURE_SENSORS] = &readMoistSensAction;
     array_actions[PRGM_STATE_INSPECTING_FOR_CHANGES] = &inspectForChangesAction;
     array_actions[PRGM_STATE_ALERT] = &alertAction;
-        
-    __curChannel = 0;
 
+    __curMillis = 0;
+    __curChannel = 0;
+    __nextTimeReadTimeMillis = 0;
     //------------------------------------------------------------------------------------ 
     // INIT GUI
     //------------------------------------------------------------------------------------
@@ -351,26 +356,23 @@ String readTime()
     // INIT TIME
     //------------------------------------------------------------------------------------
 
-#ifdef WITH_DS1307
-  tmElements_t tm;
-
-  if (!RTC.read(tm))
-  {
-    if (RTC.chipPresent())
-    {
-      __msg = F("DS1307 is stopped.\nRun SetTime");
-      setProgramAction(PRGM_STATE_ALERT);
-      return;
-      
-    } else {
-
-      __msg = F("DS1307 read error!\nCheck circuitry");
-      setProgramAction(PRGM_STATE_ALERT);
-      return;
-    }
-  }
-#endif
-
+    #ifdef WITH_DS1307
+      tmElements_t tm;
+    
+      if (!RTC.read(tm))
+      {
+        if (RTC.chipPresent())
+        {
+          __gui->displayMenu(CONFIGURE_MENU);
+          
+        } else {
+    
+          __msg = F("DS1307 read error!\nCheck circuitry");
+          setProgramAction(PRGM_STATE_ALERT);
+          return;
+        }
+      }
+    #endif
     //------------------------------------------------------------------------------------ 
     // LAUNCH MENU
     //------------------------------------------------------------------------------------
@@ -382,21 +384,21 @@ String readTime()
 void sprinklerAction()
 {
   bool doAction = false;
-  unsigned long curMillis = millis();
+  __curMillis = millis();
 
   // TODO : désactiver l'interrupt ? il est susceptible de modifier __nextActionMillis (mais peu mrobable)
-  doAction = curMillis >= __nextActionMillis;
+  doAction = __curMillis >= __nextActionMillis;
    
   // on regarde si on effecture une nouvelle action
   if (!doAction)
     return;
 
-  __actionMillis = curMillis;
+  __actionMillis = __curMillis;
   
   if (__programState != __programNextState)
   {
       __programState = __programNextState;
-      __programStateMillis = curMillis;
+      __programStateMillis = __curMillis;
   }
 
 /*

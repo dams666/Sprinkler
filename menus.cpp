@@ -5,6 +5,12 @@
 #include "MOD_water_stats.h"
 #include "MOD_valves.h"
 
+#ifdef WITH_DS1307
+#include <Wire.h>
+#include <TimeLib.h>
+#include <DS1307RTC.h>
+#endif
+
 /** Affiche le choix de l'utilisateur */
 void doMainMenuAction(byte selectedMenuItem)
 { 
@@ -81,7 +87,27 @@ void doConfigureMenuAction(byte selectedMenuItem)
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
       case 6:
-      
+        // Date / Time
+        #ifdef WITH_DS1307
+        tmElements_t tm;
+
+        tm.Year = __gui->displayIntPrompt( F("Year:"), F(""), 2018, 2018, 2050, 1);
+        tm.Month = __gui->displayIntPrompt( F("Month:"), F(""), 0, 1, 12, 1);
+        tm.Day = __gui->displayIntPrompt( F("Day:"), F(""), 0, 1, 31, 1);
+        
+        tm.Hour = __gui->displayIntPrompt( F("Hours:"), F("h"), 0, 0, 24, 1);
+        tm.Minute = __gui->displayIntPrompt( F("Minutes:"), F("m"), 0, 0, 60, 1);
+        tm.Second = 0;
+        
+        RTC.write(tm);
+
+        __gui->displayText(F("Date/Time set!"), NULL);
+        #else
+        __gui->displayText(F("Date/Time disabled!"), NULL);
+        #endif
+        
+        break;
+      case 7:
         // restore defaults    
 
           for (int thisChan = 0; thisChan < MAX_CHANNELS_; thisChan++)
@@ -97,7 +123,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
           __gui->displayText(F("Factory settings \nrestored!"), NULL);
                   
         break;
-      case 7:
+      case 8:
         __gui->displayMenu(MAIN_MENU);    
         break;
       

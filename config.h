@@ -6,8 +6,9 @@
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL
-//#define WITH_DS1307
-#undef WITH_DS1307
+#define WITH_DS1307
+//#undef WITH_DS1307
+//#define WITH_LOGGER
 #undef WITH_LOGGER
 
 #define BUZZER_PIN LED_BUILTIN
