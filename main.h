@@ -26,7 +26,7 @@ Serial.print((msg));
 
 #ifdef WITH_SERIAL
 #define DEBUG_PRINTLN(msg)\
-Serial.println(msg);      \
+Serial.println((msg));      \
 delay(50);                      
 #else
 #define DEBUG_PRINTLN(msg) 
@@ -70,10 +70,10 @@ extern chanConf __channelStorage[MAX_CHANNELS_];
 
 extern int __curChannel; // identifiant courant de la sortie à inspecter
 
-extern void readChannelStorages();
-extern void writeChannelStorages();
-extern void readCurChannelStorage();
-extern void writeCurChannelStorage();
+void readChannelStorages();
+void writeChannelStorages();
+void readCurChannelStorage();
+void writeCurChannelStorage();
 
 
 extern String readTime();
@@ -81,25 +81,36 @@ extern String readTime();
  enum  programState {
     PRGM_STATE_UNDEFINED = 0,
     PRGM_STATE_INITIALIZING = 1,
-    PRGM_STATE_CONFIGURE = 2,
-    PRGM_STATE_SLEEPING = 3,
-    PRGM_STATE_ACTIVATING_MOISTURE_SENSORS = 4,
-    PRGM_STATE_READING_MOISTURE_SENSORS = 5,
-    PRGM_STATE_INSPECTING_FOR_CHANGES = 6,
-    PRGM_STATE_CLOSING_MAIN_VALVE = 7,
-    PRGM_STATE_ALERT = 8
+    PRGM_STATE_SLEEPING = 2,
+    PRGM_STATE_ACTIVATING_MOISTURE_SENSORS = 3,
+    PRGM_STATE_READING_MOISTURE_SENSORS = 4,
+    PRGM_STATE_INSPECTING_FOR_CHANGES = 5,
+    PRGM_STATE_ALERT = 6,
+    PRGM_STATE_NB = 7
   };
-  
+
+static const char PRGM_STATE_NAME_UNDEFINED[] PROGMEM = "UNDEFINED";
+static const char PRGM_STATE_NAME_INITIALIZING[] PROGMEM = "INITIALIZING";
+static const char PRGM_STATE_NAME_SLEEPING[] PROGMEM = "SLEEPING";
+static const char PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS[] PROGMEM = "ACT MOIST SENS";
+static const char PRGM_STATE_NAME_INSPECTING_FOR_CHANGES[] PROGMEM = "READ MOIST SENS";
+static const char PRGM_STATE_NAME_ALERT[] PROGMEM = "ALERT";
+
+/* Menu principal */
+const char* const PRGM_STATE_NAMES[] = {PRGM_STATE_NAME_UNDEFINED, PRGM_STATE_NAME_INITIALIZING, PRGM_STATE_NAME_SLEEPING, PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS, PRGM_STATE_NAME_INSPECTING_FOR_CHANGES, PRGM_STATE_NAME_ALERT};
+
 extern volatile byte             __programState;
 extern volatile byte             __programNextState;
 // ON définit un byte pour éviter les problèmes d'interférence avec l'interrupt
 // cf: https://www.arduino.cc/reference/en/language/variables/variable-scope--qualifiers/volatile/
 
-extern volatile unsigned long   __stateMillis;
-extern volatile unsigned long   __nextStateMillis;
+extern volatile unsigned long   __programStateMillis;
+extern volatile unsigned long   __actionMillis;
+extern volatile unsigned long   __nextActionMillis;
 
-extern unsigned long   __nextTimeReadTimeMillis;
+typedef void (*action_t)(void);
 
+extern action_t array_actions[PRGM_STATE_NB]; 
   /*
   On définit un état spécifique des lors qu'il dure un certain temps
    
@@ -166,7 +177,7 @@ extern unsigned long   __nextTimeReadTimeMillis;
 
   int getNbChannelsActivated();
 
-  void setState(int state, unsigned int delay_ = 100);
+  void setProgramAction(int state, unsigned int delay_ = 100);
 
   bool isAlertState();
 #endif

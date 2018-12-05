@@ -92,15 +92,14 @@ String MOD_moistureSensors_::getState(bool newState)
   }
 
   void MOD_moistureSensors_::readValues()
-  {
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+  { 
+    for (int thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
     {
+      bits[thisPin] = 0;
+      
       if (thisPin < 4)
-      {
         bits[thisPin]   = ads->readADC_SingleEnded(thisPin);
-      } else {
-        bits[thisPin] = 0;
-      }
+
       volts[thisPin]  = bits[thisPin] * 0.000125;
       hum[thisPin]    = map(bits[thisPin],0,29200,0,100);
 

@@ -11,22 +11,20 @@ void doMainMenuAction(byte selectedMenuItem)
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
       case 0:
-
         if (getNbChannelsActivated() == 0)
         {
           __gui->displayText( F("All channels are OFF"));
           __gui->displayMenu(MAIN_MENU);
+
+          setProgramAction(PRGM_STATE_INITIALIZING);
           
         } else {
-        
           __MOD_moistureSensors->reset();
           __MOD_waterStats->reset();
           __MOD_valves->reset();
 
-          LCD_CLEAR();
-          setState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
+          setProgramAction(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
         }
-        
         break;
         case 1:
         __gui->displayMenu(STATISTICS_MENU); 
@@ -132,7 +130,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         __curChannel = selectedMenuItem;  
         writeCurChannelStorage();
        
-       setState(PRGM_STATE_INITIALIZING);
+       setProgramAction(PRGM_STATE_INITIALIZING);
         
     }
   

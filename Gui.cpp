@@ -312,9 +312,9 @@ void GUI::displayMenu(const Menu_t &menu)
       msg = itemArr + 1;
       msg += itemArr == selectedMenuItem ? F(")>") : F(") ");
     
-    strcpy_P(buffer, (char*)pgm_read_word(menu.items + itemArr ));
+      strcpy_P(buffer, (char*)pgm_read_word(menu.items + itemArr ));
       //msg +=  menu.items[ itemArr ];
-    msg += buffer;
+      msg += buffer;
     
       int l = LCD_COLUMNS_ - msg.length();
       for (int jj = 0; jj< l ; ++jj) 
@@ -434,7 +434,6 @@ void GUI::displayText(String msg, const __FlashStringHelper* title, bool waitKey
 
   /* Affiche le choix de l'utilisateur */
   lcd->clear();
-  //lcd->print(F("Votre choix:"));
   centerText(title);
   
   int jj = 1;
@@ -463,11 +462,10 @@ void GUI::displayText(const __FlashStringHelper* msg, const __FlashStringHelper*
   char *token;
 
   //running = strdup (msg);
-  strcpy_P(running, (char*)pgm_read_word(msg));
+  strcpy_P(running, (const char *)msg);
   
   /* Affiche le choix de l'utilisateur */
   lcd->clear();
-  //lcd->print(F("Votre choix:"));
   centerText(title);
   
   int jj = 1;

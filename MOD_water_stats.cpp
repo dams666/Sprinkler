@@ -12,28 +12,25 @@ void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
    */
   void MOD_waterStats_::flowIncPulseCounter()
   { 
-    if (isAlertState())
-      return;
-      
-    if (__MOD_valves->getNbValvesOpened() == 0)
-    {
-      if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
-      {
-         lastIncoherentPulseCountTime = millis();
-         incoherentPulseCount = 0;
-      }
-      
-      incoherentPulseCount++;
-      
-      if (incoherentPulseCount > 40)
-      {
-        __msg = F("water is flowing but\nvalves are closed!"); 
-        setState(PRGM_STATE_ALERT);
-      }    
-    } 
-
     // Increment the pulse counter
     flowPulseCount++;
+    
+    if (isAlertState() || __MOD_valves->stateMain)
+      return;
+      
+    if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
+    {
+       lastIncoherentPulseCountTime = millis();
+       incoherentPulseCount = 0;
+    }
+      
+    incoherentPulseCount++;
+      
+    if (incoherentPulseCount > 40)
+    {
+      __msg = F("water is flowing but\nvalves are closed!"); 
+      setProgramAction(PRGM_STATE_ALERT);
+    }    
 
   }
 

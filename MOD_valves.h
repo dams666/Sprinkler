@@ -10,11 +10,11 @@ class MOD_valves_ : public Module
   public:
 
   bool state[MAX_CHANNELS_];
-    
+  volatile bool stateMain;
+  
   protected:
 
   short pins[MAX_CHANNELS_];
-  //int fertilizerPin;
 
   public:
   

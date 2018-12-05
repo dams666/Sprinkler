@@ -20,13 +20,16 @@
 
 volatile byte                    __programState;
 volatile byte                    __programNextState;
-volatile unsigned long          __stateMillis;
-volatile unsigned long          __nextStateMillis;
+volatile unsigned long          __programStateMillis;
+volatile unsigned long          __nextActionMillis;
+volatile unsigned long          __actionMillis;
+
+action_t array_actions[PRGM_STATE_NB]; 
+
 String                 __msg;
 
 int                             __curChannel;
 
-unsigned long                   __nextTimeReadTimeMillis;
 
 chanConf               __channelStorage[MAX_CHANNELS_];
 MOD_moistureSensors_ * __MOD_moistureSensors;
@@ -79,10 +82,10 @@ int getNbChannelsActivated()
   return res;
 }
 
-void setState(int state, unsigned int delay_)
+void setProgramAction(int state, unsigned int delay_)
 {
   __programNextState = state;
-  __nextStateMillis = millis() + delay_;
+  __nextActionMillis = millis() + delay_;
 }
 
 bool isAlertState()
@@ -135,6 +138,154 @@ String readTime()
 
 
 
+  static void initialiseAction() 
+  {
+    DEBUG_PRINTLN(F("--- INITIALIZING --- "));
+
+    __MOD_valves->closeAllValves();
+    __MOD_moistureSensors->setEnabled(false);
+        
+    __gui->displayMenu(MAIN_MENU);
+
+  }
+
+  static void sleepAction()
+  {
+    // entrée dans l'état de sommeil
+    if (__programStateMillis = __actionMillis)
+    {
+      __MOD_moistureSensors->setEnabled(false);
+
+      __gui->displayText( F("\n\nSLEEPING..."), NULL, false);
+    }
+    
+    Button_t button;
+    // un bouton a été activé ?
+    if ((button = __gui->readPushButton()) != BP_NONE)
+    {
+      setProgramAction(PRGM_STATE_INITIALIZING);
+      return;
+    }
+    /*
+    // affichage de l'horloge
+    if (curMillis > __nextTimeReadTimeMillis)
+    {
+      LCD_PRINT(0,0,readTime());
+                    
+      __nextTimeReadTimeMillis = curMillis + 1000;
+    }
+    */
+    
+    // sortie de l'état de sommeil
+    if (millis() - __programStateMillis > SLEEPING_DURATION_)
+    {
+      setProgramAction(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
+      return;
+    }
+        
+    setProgramAction(PRGM_STATE_SLEEPING, 100);
+  }
+  
+  static void alertAction()
+  {
+    if (!__MOD_valves->closeAllValves()) {
+      __msg = F("Main valve KO!");
+    }
+    __MOD_moistureSensors->setEnabled(false);
+
+    while( __gui->readPushButton() == BP_NONE)
+    {
+      digitalWrite(BUZZER_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+      __gui->displayText(__msg, F("ALERT !"), false);
+      delay(1000);
+      
+      digitalWrite(BUZZER_PIN, LOW);   // turn the LED on (HIGH is the voltage level)
+      LCD_CLEAR();
+      delay(1000);
+    }
+
+     setProgramAction(PRGM_STATE_INITIALIZING);
+  }
+
+  static void activateMoistSensAction()
+  { 
+    DEBUG_PRINTLN(F("--- ACTIVATING MOISTURE SENSORS ---"));
+    __MOD_moistureSensors->setEnabled(true);
+
+    setProgramAction(PRGM_STATE_READING_MOISTURE_SENSORS, 100);
+  }
+
+  static void readMoistSensAction()
+  {
+    __MOD_moistureSensors->readValues();    
+    setProgramAction(PRGM_STATE_INSPECTING_FOR_CHANGES); 
+  }
+
+  static void inspectForChangesAction()
+  {          
+    if (__channelStorage[__curChannel].active)
+    {
+      if ( __MOD_moistureSensors->hasStateChanged()) 
+      {
+        __MOD_valves->changeValveState();
+        
+      } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) // détection de reprise suite à l'extinction d'une autre vanne
+      {
+        __MOD_valves->changeValveState();
+      }
+      
+      __MOD_moistureSensors->updateState();
+          
+      if (__MOD_valves->state[__curChannel]) 
+      {
+        switch(__MOD_waterStats->calcFlow())
+        {
+          case WATER_OVERFLOW:
+            __msg = F("\nValve ");
+            __msg += (1 + __curChannel);
+            __msg += F(" : Water \noverflow");
+            
+            setProgramAction(PRGM_STATE_ALERT);
+            return;
+          break;
+          case WATER_BLOCKED:
+            __msg = F("\nValve ");
+            __msg += (1 + __curChannel);
+            __msg += F(" : No water");
+            setProgramAction(PRGM_STATE_ALERT);
+            return;
+          break;
+          case WATER_FLOWING:
+            __MOD_moistureSensors->show(1);
+            __MOD_waterStats->printFlow();
+          break;
+        }
+      }
+    }
+
+    ++__curChannel;
+
+    // on doit détecter les changements sur les autres vannes
+    if (__curChannel < MAX_CHANNELS_ )
+    {
+      setProgramAction(PRGM_STATE_INSPECTING_FOR_CHANGES, 50);
+      return;
+    } 
+    __curChannel = 0;
+
+    // les vannes sont toutes fermées, et les plantes rassasiées. 
+    if (__MOD_valves->getNbValvesOpened() == 0)
+    {
+      setProgramAction(PRGM_STATE_SLEEPING);
+      return;
+    }            
+
+    // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
+    setProgramAction(PRGM_STATE_READING_MOISTURE_SENSORS, 500);
+  }
+
+
+
   void sprinklerInit()
   {
     // initialize serial communication at 9600 bits per second:
@@ -147,10 +298,17 @@ String readTime()
     //------------------------------------------------------------------------------------ 
     // INIT GLOBAL VARS
     //------------------------------------------------------------------------------------
-    __stateMillis = 0;
+    __programStateMillis = 0;
     __programState = PRGM_STATE_UNDEFINED;
-    
-    setState (PRGM_STATE_INITIALIZING, 0);
+    __actionMillis = 0;
+
+    array_actions[PRGM_STATE_UNDEFINED] = NULL;
+    array_actions[PRGM_STATE_INITIALIZING] = &initialiseAction;
+    array_actions[PRGM_STATE_SLEEPING] = &sleepAction;
+    array_actions[PRGM_STATE_ACTIVATING_MOISTURE_SENSORS] = &activateMoistSensAction;
+    array_actions[PRGM_STATE_READING_MOISTURE_SENSORS] = &readMoistSensAction;
+    array_actions[PRGM_STATE_INSPECTING_FOR_CHANGES] = &inspectForChangesAction;
+    array_actions[PRGM_STATE_ALERT] = &alertAction;
         
     __curChannel = 0;
 
@@ -184,7 +342,7 @@ String readTime()
     if (!SD.begin(4))
     {
       __msg = F("SD Cart:\nInit failed! ");
-      setState(PRGM_STATE_ALERT);
+      setProgramAction(PRGM_STATE_ALERT);
       return;
     }
     #endif
@@ -192,8 +350,6 @@ String readTime()
     //------------------------------------------------------------------------------------ 
     // INIT TIME
     //------------------------------------------------------------------------------------
-
-    __nextTimeReadTimeMillis = 0;
 
 #ifdef WITH_DS1307
   tmElements_t tm;
@@ -203,220 +359,57 @@ String readTime()
     if (RTC.chipPresent())
     {
       __msg = F("DS1307 is stopped.\nRun SetTime");
-      setState(PRGM_STATE_ALERT);
+      setProgramAction(PRGM_STATE_ALERT);
       return;
       
     } else {
 
       __msg = F("DS1307 read error!\nCheck circuitry");
-      setState(PRGM_STATE_ALERT);
+      setProgramAction(PRGM_STATE_ALERT);
       return;
     }
   }
 #endif
+
+    //------------------------------------------------------------------------------------ 
+    // LAUNCH MENU
+    //------------------------------------------------------------------------------------
+
+    setProgramAction (PRGM_STATE_INITIALIZING, 0);
     
   }
-
-  void alertAction()
-  {
-    if (!__MOD_valves->closeAllValves()) {
-      __msg = F("Main valve KO!");
-    }
-    __MOD_moistureSensors->setEnabled(false);
-
-    while( __gui->readPushButton() == BP_NONE)
-    {
-      digitalWrite(BUZZER_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-      __gui->displayText(__msg, F("ALERT !"), false);
-      delay(1000);
-      
-      digitalWrite(BUZZER_PIN, LOW);   // turn the LED on (HIGH is the voltage level)
-      LCD_CLEAR();
-      delay(1000);
-    }
-
-     setState(PRGM_STATE_INITIALIZING);
-  }
-
-
-  void inspectForChangesAction()
-  {      
-    
-    if (__channelStorage[__curChannel].active)
-    {
-      
-      if ( __MOD_moistureSensors->hasStateChanged()) 
-      {
-        __MOD_valves->changeValveState();
-        
-      } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) // détection de reprise suite à l'extinction d'une autre vanne
-      {
-        __MOD_valves->changeValveState();
-      }
-      
-      __MOD_moistureSensors->updateState();
-          
-      if (__MOD_valves->state[__curChannel]) 
-      {
-        switch(__MOD_waterStats->calcFlow())
-        {
-          case WATER_OVERFLOW:
-            __msg = F("\nValve ");
-            __msg += (1 + __curChannel);
-            __msg += F(" : Water \noverflow");
-            
-            setState(PRGM_STATE_ALERT);
-            return;
-          break;
-          case WATER_BLOCKED:
-            __msg = F("\nValve ");
-            __msg += (1 + __curChannel);
-            __msg += F(" : No water");
-            setState(PRGM_STATE_ALERT);
-            return;
-          break;
-          case WATER_FLOWING:
-            __MOD_moistureSensors->show(1);
-            __MOD_waterStats->printFlow();
-          break;
-        }
-      }
-    }
-
-    ++__curChannel;
-
-    // on doit détecter les changements sur les autres vannes
-    if (__curChannel < MAX_CHANNELS_ )
-    {
-      setState(PRGM_STATE_INSPECTING_FOR_CHANGES);
-      return;
-    } 
-    __curChannel = 0;
-
-    // les vannes sont toutes fermées, et les plantes rassasiées. 
-    if (__MOD_valves->getNbValvesOpened() == 0)
-    {
-      setState(PRGM_STATE_SLEEPING);
-      return;
-    }            
-
-    // l'eau coule et toutes les vannes ont été parcourues, on choisit un délai d'actualisation de la mesure court
-    setState(PRGM_STATE_READING_MOISTURE_SENSORS, 500);
-  }
-
-
 
 void sprinklerAction()
 {
-  bool hasStateChanged = false;
+  bool doAction = false;
   unsigned long curMillis = millis();
-  bool _doTaskWait;
-  Button_t button;
 
-  // TODO : désactiver l'interrupt ? il est susceptible de modifier __nextStateMillis (mais peu mrobable)
-  _doTaskWait = curMillis < __nextStateMillis;
+  // TODO : désactiver l'interrupt ? il est susceptible de modifier __nextActionMillis (mais peu mrobable)
+  doAction = curMillis >= __nextActionMillis;
    
-    // on regarde si la tache suivante peut être exécutée
-    if (_doTaskWait)
-    {
-      if (__programState == PRGM_STATE_SLEEPING)
-      {
-        // Mode sommeil: un bouton a été activé ?
-        if ((button = __gui->readPushButton()) != BP_NONE)
-        {
-            setState(PRGM_STATE_INITIALIZING);
-        }
-      }
-      delay(50);
-      return;
+  // on regarde si on effecture une nouvelle action
+  if (!doAction)
+    return;
 
-    } else { // execution de la nouvelle tâche
-
-        if (__programState != __programNextState)
-        {
-          hasStateChanged = true;  
-          __programState = __programNextState;
-          __stateMillis = millis();
-        }
-    }
+  __actionMillis = curMillis;
   
-
-  
-  switch (__programState)
+  if (__programState != __programNextState)
   {
-      case PRGM_STATE_INITIALIZING:
-        DEBUG_PRINTLN(F("--- INITIALIZING --- "));
-
-        __MOD_valves->closeAllValves();
-        setState(PRGM_STATE_INITIALIZING); // la fonction close AllValves a modifié l'état 
-        __MOD_moistureSensors->setEnabled(false);
-        
-        __gui->displayMenu(MAIN_MENU);
-        
-        break;
-
-      case PRGM_STATE_SLEEPING:
-      
-        // entrée dans l'état de sommeil
-        if (hasStateChanged)
-        {
-          __MOD_moistureSensors->setEnabled(false);
-
-          __gui->displayText( F("\n\nSLEEPING..."), NULL, false);
-        }
-
-        Button_t button;
-        // un bouton a été activé ?
-        if ((button = __gui->readPushButton()) != BP_NONE)
-        {
-          setState(PRGM_STATE_INITIALIZING);
-        }
-        
-        // affichage de l'horloge
-        if (curMillis > __nextTimeReadTimeMillis)
-        {
-            LCD_PRINT(0,0,readTime());
-                    
-            __nextTimeReadTimeMillis = curMillis + 1000;
-        }
-        // sortie de l'état de sommeil
-        if (curMillis - __stateMillis > SLEEPING_DURATION_)
-        {
-          setState(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
-        }
-        
-        break;
-      case PRGM_STATE_ACTIVATING_MOISTURE_SENSORS:
- 
-        DEBUG_PRINTLN(F("--- ACTIVATING MOISTURE SENSORS ---"));
-   
-        __MOD_moistureSensors->setEnabled(true);
-
-        setState(PRGM_STATE_READING_MOISTURE_SENSORS, 100);
-    
-        break;
-  
-      case PRGM_STATE_READING_MOISTURE_SENSORS:
-  
-        __MOD_moistureSensors->readValues();    
-        
-        setState(PRGM_STATE_INSPECTING_FOR_CHANGES);
-  
-        break;
-  
-      case PRGM_STATE_INSPECTING_FOR_CHANGES:
-      
-        inspectForChangesAction();
-        break;
-
-      case PRGM_STATE_ALERT:
-        alertAction();
-        break;
-        
-      //default:
-      
-      }
-
+      __programState = __programNextState;
+      __programStateMillis = curMillis;
   }
+
+/*
+  char buffer[LCD_COLUMNS_+1]; 
+  String str = F("ACTION: \n");
+  strcpy_P(buffer, PRGM_STATE_NAMES[__programState]);
+  str += buffer;
+  __gui->displayText( str);
+  */
+  // lancement de l'action
+  array_actions[__programState]();
+  
+  //__gui->displayText( F("ACTION: \nDONE!"));
+}
   
 

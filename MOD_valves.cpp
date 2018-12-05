@@ -31,11 +31,12 @@
   {
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
-      state[thisPin] = 0;
       digitalWrite(pins[thisPin], VALVE_OFF);
+      state[thisPin] = 0;
     }
     
     digitalWrite(VALVE_M_PIN, VALVE_OFF);
+    stateMain = 0;
     //digitalWrite(fertilizerPin, VALVE_OFF);
   }
 
@@ -113,17 +114,15 @@
      __MOD_waterStats->start();
 
      digitalWrite(VALVE_M_PIN, VALVE_ON); // activation de la valve principale
-
-     //digitalWrite(fertilizerPin, VALVE_ON); // activation de la valve principale
+      stateMain = 1;
 
      return true;
   }
   
   bool MOD_valves_::closeMainValve()
   {
-    setState(PRGM_STATE_CLOSING_MAIN_VALVE, 0);
     
-    DEBUG_PRINTLN(F(" => CLOSE MAIN VALVE "));
+    DEBUG_PRINTLN(F(" => CLOSING MAIN VALVE "));
     digitalWrite(VALVE_M_PIN, VALVE_OFF); // fermeture de la vanne principale
 
     int attempts = 0;
@@ -134,6 +133,7 @@
         return false;
       delay(500);
     }
+    stateMain = 0
     DEBUG_PRINTLN(F(" WATER STOPPED"));   
     return true;  
   }
