@@ -92,6 +92,7 @@ class GUI
   
   void displayText(String msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
   void displayText(const __FlashStringHelper* msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
+  void displayText2(const char text[20][LCD_COLUMNS_+1], int len, const __FlashStringHelper* title = NULL);
   
   Button_t readPushButton(void);
   

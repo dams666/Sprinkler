@@ -27,8 +27,9 @@ class MOD_moistureSensors_ : public Module
   
   MOD_moistureSensors_();
 
-  void reset();
-
+  bool reset();
+  bool start();
+  
   void readValues();
 
   bool hasStateChanged();
@@ -36,7 +37,7 @@ class MOD_moistureSensors_ : public Module
   
   String getState(bool newState = true);
   void show(int);
-  void setEnabled(bool);
+
 };
 
 

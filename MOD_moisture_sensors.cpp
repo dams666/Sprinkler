@@ -35,13 +35,24 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   pinMode(MOIST_SENS_PIN, OUTPUT);
 
   nextReadMillis = 0;
-  setEnabled(false);
+  reset();
 }
 
 
-void MOD_moistureSensors_::reset()
+bool MOD_moistureSensors_::reset()
 {
-  setEnabled(false);
+  digitalWrite(MOIST_SENS_PIN, LOW);
+  delay(50);
+  return true;
+}
+
+
+bool MOD_moistureSensors_::start()
+{
+  digitalWrite(MOIST_SENS_PIN, HIGH);
+  delay(50);
+  ads->begin();
+  return true;
 }
 
 void MOD_moistureSensors_::show(int _row)
@@ -50,7 +61,7 @@ void MOD_moistureSensors_::show(int _row)
     
     str = F("-Hum : ");
     
-    if (true) //__channelStorage[__curChannel].active)
+    if (true) //__channelConf[__curChannel].active)
     {
        str += hum[__curChannel]; 
        str += F("% (");
@@ -80,7 +91,7 @@ String MOD_moistureSensors_::getState(bool newState)
 
     for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
     { 
-      if (__channelStorage[ii].active)
+      if (__channelConf[ii].active)
       {
         str += newState ? state[ii] : prevState[ii];; 
       } else {
@@ -131,20 +142,5 @@ String MOD_moistureSensors_::getState(bool newState)
       }      
     }
     #endif
-  }
-  
-  void MOD_moistureSensors_::setEnabled(bool enabled)
-  {
-    if (enabled)
-    {
-      digitalWrite(MOIST_SENS_PIN, HIGH);
-      delay(50);
-      ads->begin();
-      
-    } else {
-      digitalWrite(MOIST_SENS_PIN, LOW);
-      delay(50);
-    }
-
   }
   

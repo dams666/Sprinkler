@@ -38,9 +38,7 @@ void doMainMenuAction(byte selectedMenuItem)
       case 2:
         __gui->displayMenu(CONFIGURE_MENU); 
         break;    
-  
-    }
-  
+    } 
 }
 
 /** Affiche le choix de l'utilisateur */
@@ -55,11 +53,10 @@ void doStatisticsMenuAction(byte selectedMenuItem)
       default:
         __curChannel = selectedMenuItem;
 
-           
         LCD_CLEAR();
         __gui->centerText(F("STATISTICS"));
 
-        __MOD_moistureSensors->setEnabled(true);
+        __MOD_moistureSensors->start();
         do
         {
             __MOD_moistureSensors->readValues();
@@ -68,14 +65,54 @@ void doStatisticsMenuAction(byte selectedMenuItem)
           delay(400);
         } while((__gui->readPushButton()) != BP_OK);
 
-        __MOD_moistureSensors->setEnabled(false);
+        __MOD_moistureSensors->reset();
         
         LCD_CLEAR();
+
+        waterStatsChanStorage_ waterStats;
+        readCurChannelStats(&waterStats);
+        
         __gui->centerText(F("STATISTICS"));
         __MOD_waterStats->show(1);
-        delay(400);
-        while((__gui->readPushButton()) != BP_OK){delay(400);}
+        char str[80];
+        sprintf_P(str, PSTR("-Total: %d ml"), waterStats.totalMililitres);
+        LCD_PRINT(0,2, str);
+        
+        while((__gui->readPushButton()) != BP_OK){delay(200);}
+        
+        //---------------------------------------------------------------------
+        // show LOG
+        
+        #ifdef WITH_DS1307
 
+        if (waterStats.nbWaterings == 0)
+          return;
+          
+        char text[20][LCD_COLUMNS_+1];
+        tmElements_t tm;
+        int len;
+        
+        if (waterStats.nbWaterings < STAT_LOG_SIZE) // pas de rotation de log
+        {
+          len = waterStats.nbWaterings;
+          for (int i = 0; i < waterStats.nbWaterings; ++i)
+          {
+            sprintf(text[i], PSTR("- %d"), waterStats.wateringSession[i].mlUsed);
+          }
+        } else {
+          len = STAT_LOG_SIZE;
+          for (int i = 0; i < STAT_LOG_SIZE; ++i)
+          {
+            int ii = (waterStats.watSessionLogLine - 1 + i) % STAT_LOG_SIZE;
+            
+            breakTime(waterStats.wateringSession[ii].dateTime,tm);
+            sprintf_P(text[i], PSTR("- %02d/%02d %02d:%02d: %d"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[ii].mlUsed);
+          }
+        }
+  
+        __gui->displayText2(text,len, F("LOG ")); 
+        #endif
+        
         __gui->displayMenu(STATISTICS_MENU); 
     }
 }
@@ -109,16 +146,21 @@ void doConfigureMenuAction(byte selectedMenuItem)
         break;
       case 7:
         // restore defaults    
-
+          /*
           for (int thisChan = 0; thisChan < MAX_CHANNELS_; thisChan++)
           {
-            __channelStorage[thisChan].active = false;
-            __channelStorage[thisChan].waterStatsStorage.maxMlPerSession = 1000;
-            __channelStorage[thisChan].waterStatsStorage.nbWaterings = 0;
-            __channelStorage[thisChan].waterStatsStorage.totalMililitres = 0;
+            __channelConf[thisChan].active = false;
+            __channelConf[thisChan].waterStatsStorage.maxMlPerSession = 1000;
+            __channelConf[thisChan].waterStatsStorage.nbWaterings = 0;
+            __channelConf[thisChan].waterStatsStorage.totalMililitres = 0;
           }
 
-          writeChannelStorages();
+          writeChannelConfs();
+          */
+
+          __gui->displayText(F("Clearing memory..."), F("FACTORY SETTINGS"), false);
+          
+          eeprom_erase_all(0);
           
           __gui->displayText(F("Factory settings \nrestored!"), NULL);
                   
@@ -132,21 +174,21 @@ void doConfigureMenuAction(byte selectedMenuItem)
         //----------------------------------------------------------------
         // Activation de la vanne
       
-        __channelStorage[selectedMenuItem].active = __gui->displayYNPrompt(F("ACTIVATE ?"), __channelStorage[selectedMenuItem].active); 
+        __channelConf[selectedMenuItem].active = __gui->displayYNPrompt(F("ACTIVATE ?"), __channelConf[selectedMenuItem].active); 
           
         LCD_CLEAR();
       
         char str[80];
       
-        if (__channelStorage[selectedMenuItem].active)
+        if (__channelConf[selectedMenuItem].active)
         {
           sprintf_P(str, PSTR("Channel %i is ON"), selectedMenuItem +1);
           __gui->displayText(str);
         
           //----------------------------------------------------------------
           // définition du max ml par session
-          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession = __gui->displayIntPrompt( F("Max ml per session:"), F("ml"),
-                                                                                                          __channelStorage[selectedMenuItem].waterStatsStorage.maxMlPerSession, 
+          __channelConf[selectedMenuItem].maxMlPerSession = __gui->displayIntPrompt( F("Max ml per session:"), F("ml"),
+                                                                                                          __channelConf[selectedMenuItem].maxMlPerSession, 
                                                                                                           0, 1000, 10);
         } else {
           sprintf_P(str, PSTR("Channel %i is OFF"), selectedMenuItem +1);
@@ -154,7 +196,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         }
 
         __curChannel = selectedMenuItem;  
-        writeCurChannelStorage();
+        writeChannelConfs();
        
        setProgramAction(PRGM_STATE_INITIALIZING);
         

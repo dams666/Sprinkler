@@ -299,19 +299,21 @@ void GUI::displayMenu(const Menu_t &menu)
 { 
   /* Variable pour le menu */
   byte selectedMenuItem = 0;   // Choix selectionné
-  byte shouldExitMenu = false; // Devient true quand l'utilisateur veut quitter le menu
+  bool shouldExitMenu = false; // Devient true quand l'utilisateur veut quitter le menu
   Button_t buttonPressed;      // Contient le bouton appuyé
 
   lcd->clear();
   //scrollBarVert((int) ( menu.nbItems / selectedMenuItem ), LCD_COLUMNS_ - 1, 0, LCD_ROWS_);
     
   centerText((const __FlashStringHelper*)menu.prompt);
-    
+  
+  /* Affiche le menu */
+  int nbPg = menu.nbItems / (LCD_ROWS_ - 1);
+  if  (menu.nbItems % (LCD_ROWS_ - 1) != 0) ++nbPg;
+     
   /* Tant que l'utilisateur ne veut pas quitter pas le menu */
   while(!shouldExitMenu)
-  {
-    /* Affiche le menu */
-    int nbPg = menu.nbItems / (LCD_ROWS_ - 1);
+  {    
     int curPg = selectedMenuItem / ( LCD_ROWS_ - 1);   // [0 ... ]
     
     int nbItemsToShow = min(LCD_ROWS_ - 1, menu.nbItems - curPg * (LCD_ROWS_ - 1));
@@ -321,7 +323,7 @@ void GUI::displayMenu(const Menu_t &menu)
   
     msg = curPg + 1;
     msg += "/";
-    msg += nbPg + 1;
+    msg += nbPg;
     
     lcd->setCursor(LCD_COLUMNS_ - 3, 0);
     lcd->print(msg);
@@ -344,13 +346,13 @@ void GUI::displayMenu(const Menu_t &menu)
         
       lcd->print( msg );
     }
-
+    
+    msg = "";
+    for (int jj = 0; jj< LCD_COLUMNS_; ++jj) 
+      msg+=" ";
     for(int ii = nbItemsToShow; ii < LCD_ROWS_ - 1; ++ii)
     {
       lcd->setCursor(0, ii + 1);
-      msg = "";
-      for (int jj = 0; jj< LCD_COLUMNS_; ++jj) 
-          msg+=" ";
       lcd->print( msg );
     }
     
@@ -446,17 +448,17 @@ void GUI::displayText(String msg, const __FlashStringHelper* title, bool waitKey
 { 
   char *running;
   char *token;
-
+  
   running = strdup (msg.c_str());
 
   /* Affiche le choix de l'utilisateur */
   lcd->clear();
   centerText(title);
   
-  int jj = 1;
+  int jj = 0;
   while ((token = strsep (&running, "\n")))
   {
-  LCD_PRINT(0, jj++, token);
+  LCD_PRINT(0, ++jj, token);
   }
   delete[] running;
   
@@ -471,13 +473,90 @@ void GUI::displayText(String msg, const __FlashStringHelper* title, bool waitKey
   }
 }
 
+
+/** Affiche le choix de l'utilisateur */
+void GUI::displayText2(const char text[20][LCD_COLUMNS_+1], int len, const __FlashStringHelper* title)
+{ 
+  bool shouldExitMenu = false;
+
+  int nbPg = len / (LCD_ROWS_ - 1);
+  if  (len % (LCD_ROWS_ - 1) != 0) ++nbPg;
+
+  int curPg = 0;
+    
+  int nbLinesToShow;
+
+  String msg;
+  byte buttonPressed;
+  
+  lcd->clear();
+  centerText(title);
+  
+    /* Tant que l'utilisateur ne veut pas quitter pas le menu */
+  while(!shouldExitMenu)
+  { 
+    msg = curPg + 1;
+    msg += "/";
+    msg += nbPg;
+    
+    lcd->setCursor(LCD_COLUMNS_ - 3, 0);
+    lcd->print(msg);
+    
+    nbLinesToShow = min(LCD_ROWS_ - 1, len - curPg * (LCD_ROWS_ - 1));
+    
+    for(int ii = 0; ii < nbLinesToShow; ++ii)
+    {
+      int itemArr = ( LCD_ROWS_ - 1 ) * curPg + ii;
+      msg = text[itemArr];
+      
+      int l = LCD_COLUMNS_ - msg.length();
+      for (int jj = 0; jj< l ; ++jj) 
+        msg+=" ";
+        
+      lcd->setCursor(0, ii + 1);
+      lcd->print( msg );
+    }
+
+    msg = "";
+    for (int jj = 0; jj< LCD_COLUMNS_; ++jj) 
+      msg+=" ";
+    for(int ii = nbLinesToShow; ii < LCD_ROWS_ - 1; ++ii)
+    {
+      lcd->setCursor(0, ii + 1);
+      lcd->print( msg );
+    }
+    /* Attend l'appui sur un bouton */
+    while((buttonPressed = readPushButton()) == BP_NONE){delay(100);}
+ 
+    /* Gére l'appui sur le bouton */
+    switch(buttonPressed) {
+    case BP_UP: // Bouton haut = page précédente
+      if(curPg > 0) {
+        curPg--;
+      }
+      break;
+    case BP_DOWN: // Bouton bas = page suivante
+      if(curPg + 1 < nbPg) {
+        curPg++;
+      }
+      break; 
+    case BP_OK:
+      shouldExitMenu = true;
+      break;
+   }
+  }
+}
+
+
+
 /** Affiche le choix de l'utilisateur */
 void GUI::displayText(const __FlashStringHelper* msg, const __FlashStringHelper* title, bool waitKey)
 { 
   char running[4*(LCD_COLUMNS_+1)];
   //char *running;
   char *token;
-
+  byte buttonPressed;
+  
   //running = strdup (msg);
   strcpy_P(running, (const char *)msg);
   
@@ -496,7 +575,6 @@ void GUI::displayText(const __FlashStringHelper* msg, const __FlashStringHelper*
   if (waitKey)
   {
     /* Attend l'appui sur le bouton gauche ou SELECT */
-    byte buttonPressed;
     do {
     buttonPressed = readPushButton();
     } 

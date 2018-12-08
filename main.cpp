@@ -31,7 +31,7 @@ String                 __msg;
 
 
 
-chanConf               __channelStorage[MAX_CHANNELS_];
+chanConf               __channelConf[MAX_CHANNELS_];
 MOD_moistureSensors_ * __MOD_moistureSensors;
 MOD_waterStats_ *      __MOD_waterStats;
 MOD_valves_ *          __MOD_valves;
@@ -50,39 +50,25 @@ unsigned long          __curMillis;
 
 
 
-void readChannelStorages()
+void readChannelConfs()
 {
   eeprom_read_bytes(  0, 
-                      (byte*)__channelStorage,
+                      (byte*)__channelConf,
                       MAX_CHANNELS_ * sizeof(chanConf));
 }
 
-void writeChannelStorages()
+void writeChannelConfs()
 {
   eeprom_write_bytes(  0, 
-                      (const byte*)__channelStorage,
+                      (const byte*)__channelConf,
                       MAX_CHANNELS_ * sizeof(chanConf));
-}
-
-void readCurChannelStorage()
-{
-   eeprom_read_bytes( sizeof(chanConf) * __curChannel,
-                      (byte*)(__channelStorage + __curChannel),
-                      sizeof(chanConf)); 
-}
-
-void writeCurChannelStorage()
-{
-  eeprom_write_bytes( sizeof(chanConf) * __curChannel, 
-                      (const byte*)(__channelStorage + __curChannel), 
-                      sizeof(chanConf)); 
 }
 
 int getNbChannelsActivated()
 {
   int res = 0;
-  for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
-    res += (int)__channelStorage[thisPin].active;
+  for (int thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
+    res += (int)__channelConf[thisPin].active;
   return res;
 }
 
@@ -102,42 +88,7 @@ bool isAlertState()
     _alert = __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;
   }*/
   
-  return __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;;
-}
-
-String  print2digits(int number) {
-  String s;
-  if (number >= 0 && number < 10) {
-    s = "0";
-  }
-  s+=number;
-  return s;
-}
-
-String readTime()
-{
-  String s;
-
-#ifdef WITH_DS1307
-  tmElements_t tm;
-  if (RTC.read(tm))
-  {
-    s = print2digits(tm.Day);
-    s+= '/';
-    s+= print2digits(tm.Month);
-    s+= '/';
-    s+=tmYearToCalendar(tm.Year);
-    s+=' ';
-    s+= print2digits(tm.Hour);
-    s+=':';
-    s+=print2digits(tm.Minute);
-    s+=':';
-    s+=print2digits(tm.Second);
-  }
-#else
-  s = millis();
-#endif
-  return s;
+  return __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;
 }
 
 
@@ -146,8 +97,8 @@ String readTime()
   {
     DEBUG_PRINTLN(F("--- INITIALIZING --- "));
 
-    __MOD_valves->closeAllValves();
-    __MOD_moistureSensors->setEnabled(false);
+    __MOD_valves->reset();
+    __MOD_moistureSensors->reset();
 
     __gui->displayMenu(MAIN_MENU);
 
@@ -156,11 +107,11 @@ String readTime()
   static void sleepAction()
   {
     // entrée dans l'état de sommeil
-    if (__programStateMillis = __actionMillis)
+    if (__programStateMillis == __actionMillis)
     {
-      __MOD_moistureSensors->setEnabled(false);
-
-      __gui->displayText( F("\n\nSLEEPING..."), NULL, false);
+      __MOD_moistureSensors->reset();
+      LCD_CLEAR();
+      LCD_PRINT(0,3,F("SLEEPING..."));
     }
     
     Button_t button;
@@ -170,15 +121,23 @@ String readTime()
       setProgramAction(PRGM_STATE_INITIALIZING);
       return;
     }
-    
+
+    #ifdef WITH_DS1307
     // affichage de l'horloge
     if (__curMillis >= __nextTimeReadTimeMillis)
-    {
-      LCD_PRINT(0,0,readTime());
+    { 
+        char str[LCD_COLUMNS_ + 1];
+      
+        tmElements_t tm;
+        if (RTC.read(tm))
+        {
+          sprintf_P(str, PSTR("%02d/%02d/%02d  %02d:%02d"), tm.Day, tm.Month, tm.Year, tm.Hour, tm.Minute);
+          LCD_PRINT(0,0,str);
+        }
                     
-      __nextTimeReadTimeMillis = __curMillis + 1000;
+        __nextTimeReadTimeMillis = __curMillis + 60000;
     }
-    
+    #endif
     
     // sortie de l'état de sommeil
     if (__curMillis - __programStateMillis >= SLEEPING_DURATION_)
@@ -192,10 +151,10 @@ String readTime()
   
   static void alertAction()
   {
-    if (!__MOD_valves->closeAllValves()) {
+    if (!__MOD_valves->reset()) {
       __msg = F("Main valve KO!");
     }
-    __MOD_moistureSensors->setEnabled(false);
+    __MOD_moistureSensors->reset();
 
     while( __gui->readPushButton() == BP_NONE)
     {
@@ -214,7 +173,7 @@ String readTime()
   static void activateMoistSensAction()
   { 
     DEBUG_PRINTLN(F("--- ACTIVATING MOISTURE SENSORS ---"));
-    __MOD_moistureSensors->setEnabled(true);
+    __MOD_moistureSensors->reset();
 
     setProgramAction(PRGM_STATE_READING_MOISTURE_SENSORS, 100);
   }
@@ -227,19 +186,22 @@ String readTime()
 
   static void inspectForChangesAction()
   {          
-    if (__channelStorage[__curChannel].active)
+    if (__channelConf[__curChannel].active)
     {
+      // lancement / fermeture des vannes
       if ( __MOD_moistureSensors->hasStateChanged()) 
       {
-        __MOD_valves->changeValveState();
+        __MOD_valves->start();
         
-      } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) // détection de reprise suite à l'extinction d'une autre vanne
+      // détection de reprise suite à l'extinction d'une autre vanne
+      } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) 
       {
-        __MOD_valves->changeValveState();
+        __MOD_valves->start();
       }
       
       __MOD_moistureSensors->updateState();
-          
+
+      // l'eau est en train de couler, affichage des statistiques de conso
       if (__MOD_valves->state[__curChannel]) 
       {
         switch(__MOD_waterStats->calcFlow())
@@ -281,6 +243,8 @@ String readTime()
     if (__MOD_valves->getNbValvesOpened() == 0)
     {
       setProgramAction(PRGM_STATE_SLEEPING);
+
+      //TODO: mettre à jour les statistiques de conso dans l'eeprom ?
       return;
     }            
 
@@ -331,7 +295,7 @@ String readTime()
     // INIT MODULES
     //------------------------------------------------------------------------------------
     
-    readChannelStorages();
+    readChannelConfs();
     
     __MOD_moistureSensors = new MOD_moistureSensors_();
     __MOD_waterStats      = new MOD_waterStats_();
@@ -377,7 +341,7 @@ String readTime()
     // LAUNCH MENU
     //------------------------------------------------------------------------------------
 
-    setProgramAction (PRGM_STATE_INITIALIZING, 0);
+    setProgramAction (PRGM_STATE_SLEEPING, 0);
     
   }
 

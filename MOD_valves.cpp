@@ -27,17 +27,17 @@
     reset();
   }
 
-  void MOD_valves_::reset()
+  bool MOD_valves_::reset()
   {
+    if (!closeMainValve())
+      return false;
+
     for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
     {
-      digitalWrite(pins[thisPin], VALVE_OFF);
       state[thisPin] = 0;
+      digitalWrite(pins[thisPin], VALVE_OFF); // fermeture de la valve
     }
-    
-    digitalWrite(VALVE_M_PIN, VALVE_OFF);
-    stateMain = 0;
-    //digitalWrite(fertilizerPin, VALVE_OFF);
+    return true;
   }
 
   int  MOD_valves_::getNbValvesOpened()
@@ -49,9 +49,9 @@
     return res;
   }
   
-  bool MOD_valves_::changeValveState()
+  bool MOD_valves_::start()
   {    
-    if (!__channelStorage[__curChannel].active)
+    if (!__channelConf[__curChannel].active)
       return false;
              
     if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
@@ -61,13 +61,11 @@
         DEBUG_PRINT(F(" => OPEN VALVE "));
         DEBUG_PRINTLN(__curChannel);
 
-        String s;
-        s = F("VALVE ");
-        s+= (1 + __curChannel);
-        s+= F(" OPENED");
+        char str[LCD_COLUMNS_ + 1];
+        sprintf_P(str, PSTR("VALVE %d OPENED"), 1 + __curChannel);
 
         LCD_CLEAR();
-        LCD_PRINT(0,0,s);
+        LCD_PRINT(0,0,str);
     
         digitalWrite(pins[__curChannel], VALVE_ON); // activation de la valve
         state[__curChannel] = 1;
@@ -85,22 +83,21 @@
         DEBUG_PRINT(F(" => CLOSE VALVE "));
         DEBUG_PRINTLN(1 + __curChannel);
         
-        String s;
-        s = F("VALVE ");
-        s+= (1 + __curChannel);
-        s+= F(" CLOSED");
+        char str[LCD_COLUMNS_ + 1];
+        sprintf_P(str, PSTR("VALVE %d CLOSED"), 1 + __curChannel);
 
-        LCD_PRINT(0,0,s);
+        LCD_PRINT(0,0,str);
               
         if (getNbValvesOpened() == 1)
           closeMainValve();
         
-        // fermeture de la vanne         
+        // fermeture de la vanne secondaire
         digitalWrite(pins[__curChannel], VALVE_OFF);
-
         state[__curChannel] = 0;
+        __MOD_waterStats->saveSessionStats();
         __gui->centerText(F("STATISTICS"));
         __MOD_waterStats->show(1);
+        
          delay(1000);
       } 
     }
@@ -108,7 +105,7 @@
   }  
   bool MOD_valves_::openMainValve()
   {
-     if (!__channelStorage[__curChannel].active)
+     if (!__channelConf[__curChannel].active)
       return false;
       
      __MOD_waterStats->start();
@@ -138,16 +135,4 @@
     return true;  
   }
  
-  bool MOD_valves_::closeAllValves()
-  {
-    if (!closeMainValve())
-      return false;
-
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
-    {
-      state[thisPin] = 0;
-      digitalWrite(pins[thisPin], VALVE_OFF); // fermeture de la valve
-    }
-    return true;
-  }
 

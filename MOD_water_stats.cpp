@@ -5,7 +5,21 @@
 //#define LIBCALL_ENABLEINTERRUPT
 #include <EnableInterrupt.h>
 
+#ifdef WITH_DS1307
+#include <Wire.h>
+#include <TimeLib.h>
+#include <DS1307RTC.h>
+#endif
+
 void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
+
+
+void readCurChannelStats(waterStatsChanStorage_* waterStats)
+{
+   eeprom_read_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel,
+                      (byte*)(waterStats),
+                      sizeof(waterStatsChanStorage_)); 
+}
 
   /*
   Flow sensor Insterrupt Service Routine
@@ -48,13 +62,7 @@ MOD_waterStats_::MOD_waterStats_()
     flowPulseCount = 0;
     flowStatsOldTime = 0;
 
-    //flowRate                    = new float           [MAX_CHANNELS_];
-    //totalMililitresSession      = new unsigned int   [MAX_CHANNELS_];
-    //lastTotalMililitresSession  = new unsigned int   [MAX_CHANNELS_];
-
     pinMode(WATER_FLOW_PIN, INPUT_PULLUP);
-    
-    readCurChannelStorage();
         
     reset();
        
@@ -65,7 +73,7 @@ MOD_waterStats_::MOD_waterStats_()
 }
 
 
-void MOD_waterStats_::reset() 
+bool MOD_waterStats_::reset() 
 {
   waterFlow = WATER_STOPPED;
     
@@ -77,9 +85,10 @@ void MOD_waterStats_::reset()
     totalMililitresSession    [ii] = 0;
     lastTotalMililitresSession[ii] = 0;               
   }
+  return true;
 }
 
-void MOD_waterStats_::start()
+bool MOD_waterStats_::start()
 {
   waterFlow = WATER_STOPPED;
     
@@ -88,11 +97,8 @@ void MOD_waterStats_::start()
   totalMililitresSession    [__curChannel] = 0;
   lastTotalMililitresSession[__curChannel] = 0;
   
-  __channelStorage[__curChannel].waterStatsStorage.nbWaterings++;
-
-  writeCurChannelStorage();
-  
   flowStatsOldTime = millis();
+  return true;
 }
 
 void MOD_waterStats_::show(int _row)
@@ -101,10 +107,6 @@ void MOD_waterStats_::show(int _row)
   
   sprintf_P(str,PSTR("-Water used: %d ml"), totalMililitresSession[__curChannel]);
   LCD_PRINT(0,_row, str);
-
-  sprintf_P(str,PSTR("-Total: %d ml"), __channelStorage[__curChannel].waterStatsStorage.totalMililitres);
-  LCD_PRINT(0,_row + 1, str);
-  
 }
 
 void MOD_waterStats_::printFlow() 
@@ -121,6 +123,33 @@ void MOD_waterStats_::printFlow()
   
 }
 
+void MOD_waterStats_::saveSessionStats()
+{
+  waterStatsChanStorage_ waterStats;
+
+  readCurChannelStats(&waterStats);
+
+  #ifdef WITH_DS1307
+  tmElements_t tm;
+  if (RTC.read(tm))
+  {
+    if (waterStats.watSessionLogLine >= STAT_LOG_SIZE)
+      waterStats. watSessionLogLine = 0;
+      
+    waterStats.wateringSession[waterStats.watSessionLogLine].mlUsed += totalMililitresSession    [__curChannel];
+    waterStats.wateringSession[waterStats.watSessionLogLine++].dateTime = makeTime(tm);
+
+  }
+  #endif
+  
+  waterStats.totalMililitres += totalMililitresSession    [__curChannel];
+  ++waterStats.nbWaterings;
+  
+  // enregistrement des stats
+  eeprom_write_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel, 
+                      (const byte*)(&waterStats),
+                      sizeof(waterStatsChanStorage_)); 
+}
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
@@ -158,10 +187,11 @@ void MOD_waterStats_::printFlow()
 
       // Add the millilitres passed in this second to the cumulative total
       totalMililitresSession[__curChannel]  += flowMilliLitres;
-      
-      __channelStorage[__curChannel].waterStatsStorage.totalMililitres += flowMilliLitres;
 
-      writeCurChannelStorage();
+      //TODO: remplacer
+      //__channelConf[__curChannel].waterStatsStorage.totalMililitres += flowMilliLitres;
+
+     // writeCurChannelConf();
 
       //DEBUG_PRINT("diff:");
       //DEBUG_PRINTLN(diffMillilitres);
@@ -176,7 +206,7 @@ void MOD_waterStats_::printFlow()
       {
         waterFlow = WATER_FLOWING;
         
-        if ( totalMililitresSession[__curChannel] > __channelStorage[__curChannel].waterStatsStorage.maxMlPerSession )          
+        if ( totalMililitresSession[__curChannel] > __channelConf[__curChannel].maxMlPerSession )          
           waterFlow = WATER_OVERFLOW;
         
         // Note the time this processing pass was executed. Note that because we've

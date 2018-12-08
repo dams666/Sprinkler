@@ -5,6 +5,10 @@
 #include "module.h"
 #include "config.h"
 
+
+/*
+ * Module chapeau. Il déclence les autres modules 
+ */
 class MOD_valves_ : public Module
 {
   public:
@@ -20,18 +24,18 @@ class MOD_valves_ : public Module
   
   MOD_valves_();
 
-  void reset();
+  bool reset();
+  bool start();
   
   int  getNbValvesOpened();
-    
-  bool changeValveState();
-    
+
+  /**
+   * Déclenchement du module water stats
+   */
   bool openMainValve();
     
   bool closeMainValve();
    
-  bool closeAllValves();
-
 };
 
 

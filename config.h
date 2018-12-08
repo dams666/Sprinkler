@@ -2,11 +2,11 @@
 #define __CONFIG_H__
 
 #define MAX_CHANNELS_ 6
-#define SLEEPING_DURATION_        10000
+#define SLEEPING_DURATION_        600000  // 1h
 
 //#define WITH_SERIAL
 #undef WITH_SERIAL
-#define WITH_DS1307
+ #define WITH_DS1307
 //#undef WITH_DS1307
 //#define WITH_LOGGER
 #undef WITH_LOGGER
@@ -46,5 +46,7 @@
 
 #define WATER_FLOW_PIN 2
 #define MAX_MILILITRES_PER_VALVE  50
+
+#define STAT_LOG_SIZE 20
 
 #endif

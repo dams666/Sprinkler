@@ -21,7 +21,7 @@
 // eeprom cells outside this range.
 //
 const int EEPROM_MIN_ADDR = 0;
-const int EEPROM_MAX_ADDR = 511;
+const int EEPROM_MAX_ADDR = 1023;
 
 
 //
@@ -32,7 +32,7 @@ const int EEPROM_MAX_ADDR = 511;
 static void eeprom_erase_all(byte b = 0xFF) {
   int i;
 
-  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; i++) {
+  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; ++i) {
     EEPROM.write(i, b);
   }
 }
@@ -52,7 +52,7 @@ static void eeprom_serial_dump_column() {
   // buffer used by sprintf
   char buf[10];
 
-  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; i++) {
+  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; ++i) {
     b = EEPROM.read(i);
     sprintf(buf, "%03X: %02X", i, b);
     Serial.println(buf);
@@ -83,7 +83,7 @@ static void eeprom_serial_dump_table(int bytesPerRow = 16) {
   j = 0;
 
   // go from first to last eeprom address
-  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; i++) {
+  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; ++i) {
 
     // if this is the first byte of the row,
     // start row by printing the byte address
@@ -146,7 +146,7 @@ static boolean eeprom_write_bytes(int startAddr, const byte* array, int numBytes
     return false;
   }
 
-  for (i = 0; i < numBytes; i++) {
+  for (i = 0; i < numBytes; ++i) {
     EEPROM.write(startAddr + i, array[i]);
   }
 
@@ -173,7 +173,7 @@ static boolean eeprom_read_bytes(int startAddr, byte array[], int numBytes) {
     return false;
   }
 
-  for (i = 0; i < numBytes; i++) {
+  for (i = 0; i < numBytes; ++i) {
     array[i] = EEPROM.read(startAddr + i);
   }
 

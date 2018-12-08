@@ -49,34 +49,19 @@ extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
 
-
-typedef struct 
-{
-  unsigned int  maxMlPerSession;
-  unsigned long totalMililitres;
-  unsigned int  nbWaterings;
-  
-} waterStatsChanStorage_;
-
 typedef struct 
 {
   bool active = false;
-
-  waterStatsChanStorage_ waterStatsStorage;
-  
+  unsigned int  maxMlPerSession;
+    
 } chanConf;
 
-extern chanConf __channelStorage[MAX_CHANNELS_];
+extern chanConf __channelConf[MAX_CHANNELS_];
 
 extern int __curChannel; // identifiant courant de la sortie à inspecter
 
-void readChannelStorages();
-void writeChannelStorages();
-void readCurChannelStorage();
-void writeCurChannelStorage();
-
-
-extern String readTime();
+void readChannelConfs();
+void writeChannelConfs();
 
  enum  programState {
     PRGM_STATE_UNDEFINED = 0,
@@ -89,15 +74,18 @@ extern String readTime();
     PRGM_STATE_NB = 7
   };
 
-static const char PRGM_STATE_NAME_UNDEFINED[] PROGMEM = "UNDEFINED";
-static const char PRGM_STATE_NAME_INITIALIZING[] PROGMEM = "INITIALIZING";
-static const char PRGM_STATE_NAME_SLEEPING[] PROGMEM = "SLEEPING";
+/*
+static const char PRGM_STATE_NAME_UNDEFINED[] PROGMEM     = "UNDEFINED";
+static const char PRGM_STATE_NAME_INITIALIZING[] PROGMEM  = "INITIALIZING";
+static const char PRGM_STATE_NAME_SLEEPING[] PROGMEM      = "SLEEPING";
 static const char PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS[] PROGMEM = "ACT MOIST SENS";
 static const char PRGM_STATE_NAME_INSPECTING_FOR_CHANGES[] PROGMEM = "READ MOIST SENS";
 static const char PRGM_STATE_NAME_ALERT[] PROGMEM = "ALERT";
 
-/* Menu principal */
+
+// Menu principal
 const char* const PRGM_STATE_NAMES[] = {PRGM_STATE_NAME_UNDEFINED, PRGM_STATE_NAME_INITIALIZING, PRGM_STATE_NAME_SLEEPING, PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS, PRGM_STATE_NAME_INSPECTING_FOR_CHANGES, PRGM_STATE_NAME_ALERT};
+*/
 
 extern volatile byte             __programState;
 extern volatile byte             __programNextState;
