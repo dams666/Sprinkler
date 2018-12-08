@@ -62,69 +62,53 @@ Button_t GUI::readPushButton(void)
     res = BP_UP;
   break;
   case 0xFF22DD:  
-    //Serial.println("Left Arrow"); 
     res = BP_LEFT;
   break;
-  case 0xFF02FD:  
-    //Serial.println("OK"); 
+  case 0xFF02FD:   
     res = BP_OK;
   break;
-  case 0xFFC23D:  
-    //Serial.println("Right Arrow"); 
+  case 0xFFC23D:   
+    res = BP_RIGHT;
     break;
-  res = BP_RIGHT;
-  case 0xFFA857:  
-    //Serial.println("Down Arrow"); 
+  case 0xFFA857:   
     res = BP_DOWN;
-  break;
+    break;
   case 0xFF6897:  
-    //Serial.println("1"); 
+    res = BP_ONE;
     break;
-
   case 0xFF9867:  
-    //Serial.println("2"); 
+    res = BP_TWO;
     break;
-
   case 0xFFB04F:  
-    //Serial.println("3"); 
+    res = BP_THREE; 
     break;
-
   case 0xFF30CF:  
-    //Serial.println("4"); 
+    res = BP_FOUR;
     break;
-
   case 0xFF18E7:  
-    //Serial.println("5"); 
+    res = BP_FIVE; 
     break;
-
   case 0xFF7A85:  
-    //Serial.println("6"); 
+    res = BP_SIX; 
     break;
-
   case 0xFF10EF:  
-    //Serial.println("7"); 
+    res = BP_SEVEN; 
     break;
-
   case 0xFF38C7:  
-    //Serial.println("8"); 
+    res = BP_EIGHT; 
     break;
-
   case 0xFF5AA5:  
-    //Serial.println("9"); 
+    res = BP_NINE; 
     break;
-
   case 0xFF42BD:  
-    //Serial.println("*"); 
+    res = BP_STAR; 
     break;
-
   case 0xFF4AB5:  
-    //Serial.println("0"); 
+    res = BP_ZERO; 
     break;
-
   case 0xFF52AD:  
-    //Serial.println("#"); 
+    res = BP_HASH; 
     break; 
-
   default: 
    break;
 
@@ -213,10 +197,51 @@ int GUI::displayIntPrompt(const __FlashStringHelper* msg, const __FlashStringHel
       case BP_DOWN: // Bouton bas = choix suivant
       value-=step;
       break;
-      case BP_CANCEL: // Bouton gauche = sorti du menu
-      shouldExitMenu = true;
+      case BP_ZERO:
+      value*=10;
       break;
-     
+      case BP_ONE:
+      value*=10;
+      value+=1;
+      break;
+      case BP_TWO:
+      value*=10;
+      value+=2;
+      break;
+      case BP_THREE:
+      value*=10;
+      value+=3;
+      break;
+      case BP_FOUR:
+      value*=10;
+      value+=4;
+      break;
+      case BP_FIVE:
+      value*=10;
+      value+=5;
+      break;
+      case BP_SIX:
+      value*=10;
+      value+=6;
+      break;
+      case BP_SEVEN:
+      value*=10;
+      value+=7;
+      break;
+      case BP_EIGHT:
+      value*=10;
+      value+=8;
+      break;
+      case BP_NINE:
+      value*=10;
+      value+=9;
+      break;
+      case BP_STAR:
+      value=0;
+      break;
+      case BP_HASH:
+      value=0;
+      break;
       case BP_OK: //
       shouldExitMenu = true;
       break;
@@ -260,9 +285,6 @@ bool GUI::displayYNPrompt(const __FlashStringHelper * msg, bool dftYes)
       case BP_LEFT:
       case BP_RIGHT:
         isYes = !isYes;
-        break;
-      case BP_CANCEL:
-        shouldExitMenu = true;
         break;
       case BP_OK:
         shouldExitMenu = true;
@@ -355,12 +377,7 @@ void GUI::displayMenu(const Menu_t &menu)
         /* Passe au choix suivant */
         selectedMenuItem++;
       }
-      break;
- 
-    case BP_CANCEL: // Bouton gauche = sorti du menu
-      shouldExitMenu = true;
-      break;
- 
+      break; 
     case BP_OK: //
       menu.callbackFnct(selectedMenuItem);
       shouldExitMenu = true;

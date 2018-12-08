@@ -48,13 +48,24 @@ typedef struct {
  
 /* Listes des touches de la shield lcd DFrobots */
 typedef enum {
-  BP_NONE,   // Aucun bouton appuyé
-  BP_OK, // Bouton SELECT
-  BP_CANCEL, // Bouton cancel
-  BP_LEFT,   // Bouton gauche
-  BP_RIGHT,  // Bouton droite
-  BP_UP,     // Bouton haut
-  BP_DOWN    // Bouton bas
+  BP_NONE     = 0,   // Aucun bouton appuyé
+  BP_OK       = 1, // Bouton SELECT
+  BP_LEFT     = 2,   // Bouton gauche
+  BP_RIGHT    = 3,  // Bouton droite
+  BP_UP       = 4,     // Bouton haut
+  BP_DOWN     = 5,    // Bouton bas
+  BP_ZERO     = 6,
+  BP_ONE      = 7,
+  BP_TWO      = 8,
+  BP_THREE    = 9,
+  BP_FOUR     = 10,
+  BP_FIVE     = 11,
+  BP_SIX      = 12,
+  BP_SEVEN    = 13,
+  BP_EIGHT    = 14,
+  BP_NINE     = 15,
+  BP_STAR     = 16,
+  BP_HASH     = 17
 } Button_t;
 
 class GUI
