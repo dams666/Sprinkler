@@ -341,7 +341,7 @@ bool isAlertState()
     // LAUNCH MENU
     //------------------------------------------------------------------------------------
 
-    setProgramAction (PRGM_STATE_SLEEPING, 0);
+    setProgramAction (PRGM_STATE_INITIALIZING, 0);
     
   }
 
