@@ -11,8 +11,6 @@
 #include <DS1307RTC.h>
 #endif
 
-void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
-
 
 void readCurChannelStats(waterStatsChanStorage_* waterStats)
 {
@@ -132,13 +130,12 @@ void MOD_waterStats_::saveSessionStats()
   #ifdef WITH_DS1307
   tmElements_t tm;
   if (RTC.read(tm))
-  {
-    if (waterStats.watSessionLogLine >= STAT_LOG_SIZE)
-      waterStats. watSessionLogLine = 0;
-      
-    waterStats.wateringSession[waterStats.watSessionLogLine].mlUsed += totalMililitresSession    [__curChannel];
-    waterStats.wateringSession[waterStats.watSessionLogLine++].dateTime = makeTime(tm);
+  {      
+    waterStats.wateringSession[waterStats.watSessionLogLine].mlUsed = totalMililitresSession    [__curChannel];
+    waterStats.wateringSession[waterStats.watSessionLogLine].dateTime = makeTime(tm);
 
+    if (++waterStats.watSessionLogLine >= STAT_LOG_SIZE)
+      waterStats. watSessionLogLine = 0;
   }
   #endif
   
@@ -146,10 +143,46 @@ void MOD_waterStats_::saveSessionStats()
   ++waterStats.nbWaterings;
   
   // enregistrement des stats
-  eeprom_write_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel, 
+  eeprom_write_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel,
                       (const byte*)(&waterStats),
                       sizeof(waterStatsChanStorage_)); 
 }
+
+
+
+void MOD_waterStats_::readLogStats(char text[20][LCD_COLUMNS_+1], int& len, waterStatsChanStorage_ & waterStats) {
+ 
+  tmElements_t tm;
+  
+  readCurChannelStats(&waterStats);
+
+  if (waterStats.nbWaterings <= STAT_LOG_SIZE) // pas de rotation de log
+  {
+    len = waterStats.nbWaterings;
+    for (int i = 0; i < len; ++i)
+    {
+      breakTime(waterStats.wateringSession[i].dateTime,tm);
+      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[i].mlUsed);
+    }
+  } else { // rotation de log
+    len = STAT_LOG_SIZE;
+    for (int i = 0; i < len; ++i)
+    {
+      int ii = (waterStats.watSessionLogLine + i) % STAT_LOG_SIZE;
+            
+      breakTime(waterStats.wateringSession[ii].dateTime,tm);
+      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[ii].mlUsed);
+    }
+  }
+
+}
+
+
+
+
+
+
+
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.

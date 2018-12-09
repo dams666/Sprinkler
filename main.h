@@ -9,9 +9,9 @@
 // Move any other LCD libraries to another folder or delete them
 // See Library "Docs" folder for possible commands etc.
 #include <LiquidCrystal_I2C.h>
-#include "Eepromutil.h"
+#include <Eepromutil.h>
 
-#include "GUI.h"
+#include <Gui.h>
 #include "config.h"
 
 #define VALVE_OFF LOW
@@ -48,6 +48,8 @@ class MOD_valves_;
 extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
+
+void globalFlowIncPulseCounter();
 
 typedef struct 
 {

@@ -48,7 +48,7 @@ unsigned long          __curMillis;
 // -------------------------------------------------------------------------------------------------
 
 
-
+void globalFlowIncPulseCounter(){ __MOD_waterStats->flowIncPulseCounter(); }
 
 void readChannelConfs()
 {

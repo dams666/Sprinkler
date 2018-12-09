@@ -70,7 +70,10 @@ void doStatisticsMenuAction(byte selectedMenuItem)
         LCD_CLEAR();
 
         waterStatsChanStorage_ waterStats;
-        readCurChannelStats(&waterStats);
+        char text[20][LCD_COLUMNS_+1];
+        int txtArrLen = 0;
+         
+        __MOD_waterStats->readLogStats(text, txtArrLen, waterStats);
         
         __gui->centerText(F("STATISTICS"));
         __MOD_waterStats->show(1);
@@ -79,39 +82,8 @@ void doStatisticsMenuAction(byte selectedMenuItem)
         LCD_PRINT(0,2, str);
         
         while((__gui->readPushButton()) != BP_OK){delay(200);}
-        
-        //---------------------------------------------------------------------
-        // show LOG
-        
-        #ifdef WITH_DS1307
-
-        if (waterStats.nbWaterings == 0)
-          return;
           
-        char text[20][LCD_COLUMNS_+1];
-        tmElements_t tm;
-        int len;
-        
-        if (waterStats.nbWaterings < STAT_LOG_SIZE) // pas de rotation de log
-        {
-          len = waterStats.nbWaterings;
-          for (int i = 0; i < waterStats.nbWaterings; ++i)
-          {
-            sprintf(text[i], PSTR("- %d"), waterStats.wateringSession[i].mlUsed);
-          }
-        } else {
-          len = STAT_LOG_SIZE;
-          for (int i = 0; i < STAT_LOG_SIZE; ++i)
-          {
-            int ii = (waterStats.watSessionLogLine - 1 + i) % STAT_LOG_SIZE;
-            
-            breakTime(waterStats.wateringSession[ii].dateTime,tm);
-            sprintf_P(text[i], PSTR("- %02d/%02d %02d:%02d: %d"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[ii].mlUsed);
-          }
-        }
-  
-        __gui->displayText2(text,len, F("LOG ")); 
-        #endif
+        __gui->displayText2(text,txtArrLen, F("LOG ")); 
         
         __gui->displayMenu(STATISTICS_MENU); 
     }

@@ -85,7 +85,9 @@ class MOD_waterStats_ : public Module
    * enregistremnt des stats dans l'eeprom
    */
   void saveSessionStats();
-  
+
+  void readLogStats(char text[20][LCD_COLUMNS_+1], int& len, waterStatsChanStorage_ & waterStats);
+    
   /* Calcul des statistiques de consommation d'eau une fois une vanne ouverte
    ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
   */ 
