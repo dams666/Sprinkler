@@ -294,11 +294,10 @@ bool GUI::displayYNPrompt(const __FlashStringHelper * msg, bool dftYes)
   return isYes;
 }
 /** Affiche le menu passé en argument */
-void GUI::displayMenu(const Menu_t &menu)
+uint8_t GUI::displayMenu(const Menu_t &menu)
 { 
   /* Variable pour le menu */
   byte selectedMenuItem = 0;   // Choix selectionné
-  bool shouldExitMenu = false; // Devient true quand l'utilisateur veut quitter le menu
   Button_t buttonPressed;      // Contient le bouton appuyé
 
   lcd->clear();
@@ -311,7 +310,7 @@ void GUI::displayMenu(const Menu_t &menu)
   if  (menu.nbItems % (LCD_ROWS_ - 1) != 0) ++nbPg;
      
   /* Tant que l'utilisateur ne veut pas quitter pas le menu */
-  while(!shouldExitMenu)
+  while(true)
   {    
     uint8_t curPg = selectedMenuItem / ( LCD_ROWS_ - 1);   // [0 ... ]
     
@@ -380,8 +379,7 @@ void GUI::displayMenu(const Menu_t &menu)
       }
       break; 
     case BP_OK: //
-      menu.callbackFnct(selectedMenuItem);
-      shouldExitMenu = true;
+	  return selectedMenuItem;
       break;
    }
   }

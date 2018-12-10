@@ -30,53 +30,13 @@ delay(50);
 #define DEBUG_PRINTLN(msg) 
 #endif
 
-#ifdef WITH_LOGGER
-namespace SDLib {
-  class File;
-};
-extern SDLib::File           __fileLogger;
-#endif
-  
-extern String                __msg;
-
-class MOD_moistureSensors_;
-class MOD_waterStats_;
-class MOD_valves_;
-
-extern MOD_moistureSensors_  * __MOD_moistureSensors;
-extern MOD_waterStats_       * __MOD_waterStats;
-extern MOD_valves_           * __MOD_valves;
-
-extern GUI * __gui;
-
-#define LCD_CLEAR()\
-__gui->lcd->clear();
-
-#define LCD_PRINT(col, line, msg)\
-__gui->lcd->setCursor(col,line);\
-__gui->lcd->print(msg);\
-delay(50);
-
-
-void globalFlowIncPulseCounter();
-
-typedef struct 
-{
-  bool active = false;
-  uint16_t  maxMlPerSession;
-    
-} chanConf;
-
-extern chanConf __channelConf[MAX_CHANNELS_];
-
-extern uint8_t __curChannel; // identifiant courant de la sortie à inspecter
-
-void readChannelConfs();
-void writeChannelConfs();
+//-------------------------------------------------------------------------------------------------------------
+// VARIABLES DE LA MACHINE A ETAT
+//-------------------------------------------------------------------------------------------------------------
 
  enum  programState {
     PRGM_STATE_UNDEFINED = 0,
-    PRGM_STATE_INITIALIZING = 1,
+    PRGM_STATE_SHOW_MENU = 1,
     PRGM_STATE_SLEEPING = 2,
     PRGM_STATE_ACTIVATING_MOISTURE_SENSORS = 3,
     PRGM_STATE_READING_MOISTURE_SENSORS = 4,
@@ -84,19 +44,6 @@ void writeChannelConfs();
     PRGM_STATE_ALERT = 6,
     PRGM_STATE_NB = 7
   };
-
-/*
-static const char PRGM_STATE_NAME_UNDEFINED[] PROGMEM     = "UNDEFINED";
-static const char PRGM_STATE_NAME_INITIALIZING[] PROGMEM  = "INITIALIZING";
-static const char PRGM_STATE_NAME_SLEEPING[] PROGMEM      = "SLEEPING";
-static const char PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS[] PROGMEM = "ACT MOIST SENS";
-static const char PRGM_STATE_NAME_INSPECTING_FOR_CHANGES[] PROGMEM = "READ MOIST SENS";
-static const char PRGM_STATE_NAME_ALERT[] PROGMEM = "ALERT";
-
-
-// Menu principal
-const char* const PRGM_STATE_NAMES[] = {PRGM_STATE_NAME_UNDEFINED, PRGM_STATE_NAME_INITIALIZING, PRGM_STATE_NAME_SLEEPING, PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS, PRGM_STATE_NAME_INSPECTING_FOR_CHANGES, PRGM_STATE_NAME_ALERT};
-*/
 
 extern volatile uint8_t             __programState;
 extern volatile uint8_t             __programNextState;
@@ -109,11 +56,11 @@ extern volatile unsigned long   __nextActionMillis;
 
 typedef void (*action_t)(void);
 
-extern action_t array_actions[PRGM_STATE_NB]; 
+extern action_t __array_actions[PRGM_STATE_NB]; 
   /*
   On définit un état spécifique des lors qu'il dure un certain temps
    
-   PRGM_STATE_INITIALIZING : 
+   PRGM_STATE_SHOW_MENU : 
    
    après allumage ou reboot de l'arduino après plantage. Les vannes secondaires sont ouvertes puis refermées pour dissiper l'eau 
    qui se serait éventuellement accumulée dans les tuyaux entre la vanne princuppale et la vanne secondaire
@@ -130,7 +77,7 @@ extern action_t array_actions[PRGM_STATE_NB];
    activation de l'ensemble des détecteurs d'humidité. On laisse un court instant passer avant de lire les résultats (cf état PRGM_STATE_READING_MOISTURE_SENSORS)
    
    ETAT(S) PRECEDENT(S) :
-   PRGM_STATE_INITIALIZING
+   PRGM_STATE_SHOW_MENU
    INSPECTING FOR CHANGES : si toutes les vannes secondaires ont été fermées, on passe en veille
    
    ETAT(S) SUIVANT(S)   : 
@@ -169,15 +116,81 @@ extern action_t array_actions[PRGM_STATE_NB];
    ETAT(S) SUIVANT(S)   : 
    
    */
-
   void sprinklerInit();
-
+  
   void sprinklerAction();
-
-  uint8_t getNbChannelsActivated();
-
+  
   void setProgramAction(uint8_t state, uint8_t delay_ = 100);
-
+  
   bool isAlertState();
+
+/*
+static const char PRGM_STATE_NAME_UNDEFINED[] PROGMEM     = "UNDEFINED";
+static const char PRGM_STATE_NAME_INITIALIZING[] PROGMEM  = "INITIALIZING";
+static const char PRGM_STATE_NAME_SLEEPING[] PROGMEM      = "SLEEPING";
+static const char PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS[] PROGMEM = "ACT MOIST SENS";
+static const char PRGM_STATE_NAME_INSPECTING_FOR_CHANGES[] PROGMEM = "READ MOIST SENS";
+static const char PRGM_STATE_NAME_ALERT[] PROGMEM = "ALERT";
+
+
+// Menu principal
+const char* const PRGM_STATE_NAMES[] = {PRGM_STATE_NAME_UNDEFINED, PRGM_STATE_NAME_INITIALIZING, PRGM_STATE_NAME_SLEEPING, PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS, PRGM_STATE_NAME_INSPECTING_FOR_CHANGES, PRGM_STATE_NAME_ALERT};
+*/
+
+//-------------------------------------------------------------------------------------------------------------
+// VARIABLES TRANSVERSES UTILISEES PAR LES DIFFERENTS ETATS
+//-------------------------------------------------------------------------------------------------------------
+
+extern String                __msg;
+
+// Modules
+class MOD_moistureSensors_;
+class MOD_waterStats_;
+class MOD_valves_;
+
+// GUI
+extern MOD_moistureSensors_  * __MOD_moistureSensors;
+extern MOD_waterStats_       * __MOD_waterStats;
+extern MOD_valves_           * __MOD_valves;
+
+extern GUI * __gui;
+
+#define LCD_CLEAR()\
+__gui->lcd->clear();
+
+#define LCD_PRINT(col, line, msg)\
+__gui->lcd->setCursor(col,line);\
+__gui->lcd->print(msg);\
+delay(50);
+
+// Logger
+#ifdef WITH_LOGGER
+namespace SDLib {
+  class File;
+};
+extern SDLib::File           __fileLogger;
+#endif
+
+void globalFlowIncPulseCounter();
+
+typedef struct 
+{
+  bool active = false;
+  uint16_t  maxMlPerSession;
+    
+} chanConf;
+
+extern chanConf __channelConf[MAX_CHANNELS_];
+
+void readChannelConfs();
+void writeChannelConfs();
+uint8_t getNbChannelsActivated();
+
+// identifiant courant de la sortie à inspecter
+extern uint8_t __curChannel; 
+
+// menu à afficher
+extern uint8_t __curMenu;
+
 #endif
 

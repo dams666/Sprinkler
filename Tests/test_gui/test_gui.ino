@@ -17,8 +17,8 @@ static const char MENU_TITLE[] PROGMEM = "TEST GUI";
 static const Menu_t MAIN_MENU = {
   MENU_TITLE,
   MENU_ITEMS,
-  5,
-  &doMainMenuAction
+  5
+  //&doMainMenuAction
 };
 
 
@@ -33,22 +33,18 @@ void doMainMenuAction(byte selectedMenuItem)
 }
 
 void setup() {
-
-  __gui = new GUI(0x3F, 5);
-  
-
-  
+  __gui = new GUI(0x3F, 5);  
 }
 
 void loop() {
-    __gui->displayMenu(MAIN_MENU);
-
-   char **text = new char*[7];
+   doMainMenuAction( __gui->displayMenu(MAIN_MENU) );
+   
+   //char **text = new char*[7];
 
    //for (uint8_t i = 0; i< 7; ++i) {
    // text[i] = new char[21];
    //}
-  char text[20][LCD_COLUMNS_+1];
+  char text[7][LCD_COLUMNS_+1];
 
   //memset(text,0, sizeof(char)*20*(LCD_COLUMNS_ +1));
 
@@ -60,7 +56,7 @@ void loop() {
   strcpy_P(text[5], PSTR("Mignon @-@"));
   strcpy_P(text[6], PSTR("DEBILE !"));
   
-  __gui->displayText2(text,7, F("TEST GUI"));
+  __gui->displayText2((char**)text,7, F("TEST GUI"));
 
   //for (uint8_t i = 0; i< 7; ++i) {
   //  delete[] text[i];  

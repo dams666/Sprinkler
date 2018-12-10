@@ -30,7 +30,7 @@ typedef struct {
   const char* prompt;     // Titre du menu
   const char** items;     // Tableau de choix du menu
   const uint8_t nbItems;  // Nombre de choix possibles
-  void (*callbackFnct)(uint8_t menuItemSelected); // Pointeur sur fonction pour gérer le choix de l'utilisateur
+  //void (*callbackFnct)(uint8_t menuItemSelected); // Pointeur sur fonction pour gérer le choix de l'utilisateur
 } Menu_t;
  
 /* Listes des touches de la shield lcd DFrobots */
@@ -74,7 +74,7 @@ class GUI
   int displayIntPrompt(const __FlashStringHelper* msg, const __FlashStringHelper* unit, int start, int min, int max, int step);
   bool displayYNPrompt(const __FlashStringHelper* msg, bool dftYes = false);
   
-  void displayMenu(const Menu_t &menu);
+  uint8_t displayMenu(const Menu_t &menu);
   
   void displayText(const String& msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
   void displayText(const __FlashStringHelper* msg, const __FlashStringHelper* title = NULL, bool waitKey = true);

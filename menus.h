@@ -3,6 +3,13 @@
 
 #include "GUI.h"
 
+/* Listes des touches de la shield lcd DFrobots */
+typedef enum {
+  L_MENU_MAIN       = 0,
+  L_MENU_STATISTICS = 1,
+  L_MENU_CONFIGURE  = 2,
+} Menu_l;
+
 static const char GEN_MENU_ITEMS_CHAN_1[] PROGMEM = "Channel 1";
 static const char GEN_MENU_ITEMS_CHAN_2[] PROGMEM = "Channel 2";
 static const char GEN_MENU_ITEMS_CHAN_3[] PROGMEM = "Channel 3";
@@ -29,8 +36,7 @@ static const char* const MAIN_MENU_ITEMS[] PROGMEM = {MAIN_MENU_ITEMS_1, MAIN_ME
 static const Menu_t MAIN_MENU = {
   MAIN_MENU_TITLE,
   MAIN_MENU_ITEMS,
-  3,
-  &doMainMenuAction
+  3
 };
 
 // -------------------------------------------------------
@@ -46,8 +52,7 @@ void doStatisticsMenuAction(byte);
 static const Menu_t STATISTICS_MENU = {
   STATISTICS_MENU_TITLE,
   STATISTICS_MENU_ITEMS,
-  MAX_CHANNELS_ + 1,
-  &doStatisticsMenuAction
+  MAX_CHANNELS_ + 1
 };
 
 // -------------------------------------------------------
@@ -66,8 +71,7 @@ void doConfigureMenuAction(byte);
 static const Menu_t CONFIGURE_MENU = {
   CONFIG_MENU_TITLE,
   CONFIG_MENU_ITEMS,
-  MAX_CHANNELS_ + 3,
-  &doConfigureMenuAction
+  MAX_CHANNELS_ + 3
 };
  
 
