@@ -4,28 +4,14 @@
 
 //#define LIBCALL_ENABLEINTERRUPT
 #include <EnableInterrupt.h>
-
-#ifdef WITH_DS1307
-#include <Wire.h>
-#include <TimeLib.h>
-#include <DS1307RTC.h>
-#endif
-
-
-void readCurChannelStats(waterStatsChanStorage_* waterStats)
-{
-   eeprom_read_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel,
-                      (byte*)(waterStats),
-                      sizeof(waterStatsChanStorage_)); 
-}
-
+#include <WaterStatsLogger.h>
   /*
   Flow sensor Insterrupt Service Routine
    */
   void MOD_waterStats_::flowIncPulseCounter()
   { 
     // Increment the pulse counter
-    flowPulseCount++;
+    ++flowPulseCount;
     
     if (isAlertState() || __MOD_valves->stateMain)
       return;
@@ -36,7 +22,7 @@ void readCurChannelStats(waterStatsChanStorage_* waterStats)
        incoherentPulseCount = 0;
     }
       
-    incoherentPulseCount++;
+    ++incoherentPulseCount;
       
     if (incoherentPulseCount > 40)
     {
@@ -77,7 +63,7 @@ bool MOD_waterStats_::reset()
     
   flowStatsOldTime = 0;
 
-  for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
+  for (uint8_t ii = 0; ii< MAX_CHANNELS_; ++ii)
   {
     flowRate                  [ii] = 0.0f;
     totalMililitresSession    [ii] = 0;
@@ -99,7 +85,7 @@ bool MOD_waterStats_::start()
   return true;
 }
 
-void MOD_waterStats_::show(int _row)
+void MOD_waterStats_::show(uint8_t _row)
 {  
   char str[80];
   
@@ -121,73 +107,12 @@ void MOD_waterStats_::printFlow()
   
 }
 
-void MOD_waterStats_::saveSessionStats()
-{
-  waterStatsChanStorage_ waterStats;
-
-  readCurChannelStats(&waterStats);
-
-  #ifdef WITH_DS1307
-  tmElements_t tm;
-  if (RTC.read(tm))
-  {      
-    waterStats.wateringSession[waterStats.watSessionLogLine].mlUsed = totalMililitresSession    [__curChannel];
-    waterStats.wateringSession[waterStats.watSessionLogLine].dateTime = makeTime(tm);
-
-    if (++waterStats.watSessionLogLine >= STAT_LOG_SIZE)
-      waterStats. watSessionLogLine = 0;
-  }
-  #endif
-  
-  waterStats.totalMililitres += totalMililitresSession    [__curChannel];
-  ++waterStats.nbWaterings;
-  
-  // enregistrement des stats
-  eeprom_write_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel,
-                      (const byte*)(&waterStats),
-                      sizeof(waterStatsChanStorage_)); 
-}
-
-
-
-void MOD_waterStats_::readLogStats(char text[20][LCD_COLUMNS_+1], int& len, waterStatsChanStorage_ & waterStats) {
- 
-  tmElements_t tm;
-  
-  readCurChannelStats(&waterStats);
-
-  if (waterStats.nbWaterings <= STAT_LOG_SIZE) // pas de rotation de log
-  {
-    len = waterStats.nbWaterings;
-    for (int i = 0; i < len; ++i)
-    {
-      breakTime(waterStats.wateringSession[i].dateTime,tm);
-      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[i].mlUsed);
-    }
-  } else { // rotation de log
-    len = STAT_LOG_SIZE;
-    for (int i = 0; i < len; ++i)
-    {
-      int ii = (waterStats.watSessionLogLine + i) % STAT_LOG_SIZE;
-            
-      breakTime(waterStats.wateringSession[ii].dateTime,tm);
-      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[ii].mlUsed);
-    }
-  }
-
-}
-
-
-
-
-
-
 
 
 // Calcul des statistiques de consommation d'eau une fois une vanne ouverte
 // ATTENTION : on part du principe qu'une seule vanne est ouverte à la fois.
 
-  int MOD_waterStats_::calcFlow() 
+  waterFlow_ MOD_waterStats_::calcFlow() 
   {
     unsigned long newTime = millis();
 
@@ -216,7 +141,7 @@ void MOD_waterStats_::readLogStats(char text[20][LCD_COLUMNS_+1], int& len, wate
       // Divide the flow rate in litres/minute by 60 to determine how many litres have
       // passed through the sensor in this 1 second interval, then multiply by 1000 to
       // convert to millilitres.
-      unsigned int flowMilliLitres = (flowRate[__curChannel] / 60) * 1000;
+      uint8_t flowMilliLitres = (flowRate[__curChannel] / 60) * 1000;
 
       // Add the millilitres passed in this second to the cumulative total
       totalMililitresSession[__curChannel]  += flowMilliLitres;
@@ -257,9 +182,8 @@ void MOD_waterStats_::readLogStats(char text[20][LCD_COLUMNS_+1], int& len, wate
         
       }
 
-      unsigned int frac;
-
       #ifdef WITH_SERIAL  
+            unsigned int frac;
             // Print the flow rate for this second in litres / minute
             Serial.print(F("Flow rate: "));
             Serial.print(int(flowRate[__curChannel]));  // Print the integer part of the variable
@@ -283,3 +207,11 @@ void MOD_waterStats_::readLogStats(char text[20][LCD_COLUMNS_+1], int& len, wate
       
       return waterFlow;
   }
+
+  void MOD_waterStats_::saveSessionStats()
+  {
+    waterStatsLogger statsLogger(sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel);
+    statsLogger.saveSessionStats(totalMililitresSession[__curChannel]);
+  }
+
+  

@@ -1,113 +1,39 @@
-#include <TimeLib.h>
-#include <Eepromutil.h>
+//#include <Eepromutil.h>
 #include <Gui.h>
 
-#define WITH_DS1307
-#ifdef WITH_DS1307
-#include <Wire.h>
-#include <TimeLib.h>
-#include <DS1307RTC.h>
-#endif
-
 #define STAT_LOG_SIZE 15
+#define STAT_MSG_LEN 21 //LCD_COLUMNS_+ 1
 
-// LOG: Statistiques de consommation d'eau
-// fichiers placés
-typedef struct
-{
-  time_t dateTime; // 4 bytes date representation
-  unsigned int mlUsed; // 2 bytes
-   
-} wateringSession_;
+#include <WaterStatsLogger.h>
 
-typedef struct 
-{
-  unsigned long totalMililitres;
-  unsigned int  nbWaterings;
+#define LCD_I2C_ADDR 0x3F
+#define RC_PIN 5
 
-  wateringSession_ wateringSession[STAT_LOG_SIZE];
-  unsigned short watSessionLogLine; // identifiant de ligne courant dans le tableau de log
+GUI*              __gui;
+waterStatsLogger* __statsLogger;
+
+#define LCD_CLEAR()\
+__gui->lcd->clear();
+
+#define LCD_PRINT(col, line, msg)\
+__gui->lcd->setCursor(col,line);\
+__gui->lcd->print(msg);\
+delay(50);
+
+void printTestResult(uint16_t expectedWaterings, unsigned long expectedMl, int expectedLogLine) {
+  char text[STAT_LOG_SIZE][STAT_MSG_LEN];
+  uint8_t len = 0;
+  unsigned long totalMililitres = 0;
+  uint16_t nbWaterings = 0;
   
-} waterStatsChanStorage_;
-
-
-
-void readCurChannelStats(waterStatsChanStorage_* waterStats)
-{
-   eeprom_read_bytes( 0, (byte*)(waterStats), sizeof(waterStatsChanStorage_)); 
-}
-
-void saveSessionStats(int totalMililitresSession)
-{
-  waterStatsChanStorage_ waterStats;
-
-  readCurChannelStats(&waterStats);
-
-  #ifdef WITH_DS1307
-  tmElements_t tm;
-  if (RTC.read(tm))
-  {      
-    waterStats.wateringSession[waterStats.watSessionLogLine].mlUsed = totalMililitresSession;
-    waterStats.wateringSession[waterStats.watSessionLogLine].dateTime = makeTime(tm);
-
-    if (++waterStats.watSessionLogLine >= STAT_LOG_SIZE)
-      waterStats. watSessionLogLine = 0;
-  }
-  #endif
-  
-  waterStats.totalMililitres += totalMililitresSession;
-  ++waterStats.nbWaterings;
-  
-  // enregistrement des stats
-  eeprom_write_bytes( 0, 
-                      (const byte*)(&waterStats),
-                      sizeof(waterStatsChanStorage_)); 
-}
-
-
-void readLogStats(char text[20][LCD_COLUMNS_+1], int& len, waterStatsChanStorage_ & waterStats) {
- 
-  tmElements_t tm;
-  
-  readCurChannelStats(&waterStats);
-
-  if (waterStats.nbWaterings <= STAT_LOG_SIZE) // pas de rotation de log
-  {
-    len = waterStats.nbWaterings;
-    for (int i = 0; i < len; ++i)
-    {
-      breakTime(waterStats.wateringSession[i].dateTime,tm);
-      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[i].mlUsed);
-    }
-  } else { // rotation de log
-    len = STAT_LOG_SIZE;
-    for (int i = 0; i < len; ++i)
-    {
-      int ii = (waterStats.watSessionLogLine + i) % STAT_LOG_SIZE;
-            
-      breakTime(waterStats.wateringSession[ii].dateTime,tm);
-      sprintf_P(text[i], PSTR("%02d/%02d %02d:%02d %d ml"), tm.Day, tm.Month, tm.Hour, tm.Minute, waterStats.wateringSession[ii].mlUsed);
-    }
-  }
-
-}
-
-
-void printTestResult(int expectedWaterings, unsigned long expectedMl, int expectedLogLine) {
-  char text[20][LCD_COLUMNS_+1];
-  int len = 0;
-  memset (text, 0, sizeof(char) * 20 * (LCD_COLUMNS_ - 1));  
-
-  waterStatsChanStorage_ waterStats;
-  
-  readLogStats(text, len, waterStats);
+  __statsLogger->readLogStats(text, len, totalMililitres, nbWaterings);
   
   Serial.print("Test waterings (should expect ");
   Serial.print(expectedWaterings);
   Serial.print("): ");
-  Serial.println(waterStats.nbWaterings);
+  Serial.println(nbWaterings);
 
-  if (waterStats.nbWaterings == expectedWaterings) {
+  if (nbWaterings == expectedWaterings) {
     Serial.println("=> OK");
   } else {
     Serial.println("=> KO");
@@ -116,14 +42,14 @@ void printTestResult(int expectedWaterings, unsigned long expectedMl, int expect
   Serial.print("Test ml (should expect ");
   Serial.print(expectedMl);
   Serial.print(" ml): ");
-  Serial.println(waterStats.totalMililitres);
+  Serial.println(totalMililitres);
 
-  if (waterStats.totalMililitres == expectedMl) {
+  if (totalMililitres == expectedMl) {
     Serial.println("=> OK");
   } else {
     Serial.println("=> KO");
   }
-
+  /*
   Serial.print("Test logline (should expect ");
   Serial.print(expectedLogLine);
   Serial.print("): ");
@@ -134,21 +60,26 @@ void printTestResult(int expectedWaterings, unsigned long expectedMl, int expect
   } else {
     Serial.println("=> KO");
   }
-  
+  */
   Serial.println("Log: ");
   
   for (int i = 0; i < len; ++i) {
     Serial.println(text[i]);
   } 
 
+  __gui->displayText2(text, len, F("LOG"));
 }
 
 void setup() {
 
+  __gui = new GUI(LCD_I2C_ADDR, RC_PIN);
+  __statsLogger = new waterStatsLogger(0);
+  
   Serial.begin(115200);  
 
   Serial.print("Clearing memory... ");
-  eeprom_erase_all(0);
+  __statsLogger->clearStats();
+  //eeprom_erase_all(0);
   Serial.println("Done!");
 
   Serial.println("--------------------------------------------------------------");
@@ -166,7 +97,7 @@ void setup() {
   for (int i = 0; i < STAT_LOG_SIZE; ++i) {
     mlSession = 10*(i+1);
     totalMl += mlSession;
-    saveSessionStats(mlSession);
+    __statsLogger->saveSessionStats(mlSession);
   }
 
   printTestResult(15, totalMl, 0);
@@ -175,7 +106,7 @@ void setup() {
   Serial.println("Test rotation log");
   Serial.println("--------------------------------------------------------------");
 
-  saveSessionStats(160);
+  __statsLogger->saveSessionStats(160);
   totalMl +=160;
   printTestResult(STAT_LOG_SIZE + 1, totalMl, 1);
 
@@ -184,9 +115,9 @@ void setup() {
   Serial.println("--------------------------------------------------------------");
 
   for (int i = 0; i < STAT_LOG_SIZE - 1; ++i) {
-    mlSession = 10*(i+1);
+    mlSession = 10*(i+1) + 160;
     totalMl += mlSession;
-    saveSessionStats(mlSession);
+    __statsLogger->saveSessionStats(mlSession);
   }
   printTestResult(2 * STAT_LOG_SIZE, totalMl, 0);
   

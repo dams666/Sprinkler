@@ -18,7 +18,7 @@ class MOD_valves_ : public Module
   
   protected:
 
-  short pins[MAX_CHANNELS_];
+  uint8_t pins[MAX_CHANNELS_];
 
   public:
   
@@ -27,7 +27,7 @@ class MOD_valves_ : public Module
   bool reset();
   bool start();
   
-  int  getNbValvesOpened();
+  uint8_t  getNbValvesOpened();
 
   /**
    * Déclenchement du module water stats

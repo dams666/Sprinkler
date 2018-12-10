@@ -1,13 +1,9 @@
 #ifndef __GUI_H__
 #define __GUI_H__
 
-class GUI;
-class LiquidCrystal_I2C;
-
+#include <LiquidCrystal_I2C.h>
 class IRrecv;
 class decode_results;
-
-extern GUI * __gui;
 
 #include <Arduino.h>
 
@@ -28,15 +24,6 @@ extern GUI * __gui;
 #define btn_cnc               3
 
 #define BTN_NB                4
-
-#define LCD_CLEAR()\
-__gui->lcd->clear();
-
-#define LCD_PRINT(col, line, msg)\
-__gui->lcd->setCursor(col,line);\
-__gui->lcd->print(msg);\
-delay(50);
-
 
 /* Structure d'un menu */
 typedef struct {
@@ -70,29 +57,28 @@ typedef enum {
 
 class GUI
 {
-  public:
+  protected:
   
-  bool                sleepingMode;
-  unsigned long       lasTimeBtnCall;
-    
-  LiquidCrystal_I2C * lcd;
-
-  IRrecv *        irDetect;
-  decode_results *    irIn;
+  bool                	sleepingMode;
+  unsigned long       	lasTimeBtnCall;
+  IRrecv *        		irDetect;
+  decode_results *    	irIn;
   
   public:
+  
+  // classe publique a cause de la macro LCD_PRINT (TODO: changer)
+  LiquidCrystal_I2C * 	lcd;
   
   GUI(uint8_t lcd_i2c_addr, uint8_t rc_pin);
   
   int displayIntPrompt(const __FlashStringHelper* msg, const __FlashStringHelper* unit, int start, int min, int max, int step);
-
   bool displayYNPrompt(const __FlashStringHelper* msg, bool dftYes = false);
   
   void displayMenu(const Menu_t &menu);
   
-  void displayText(String msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
+  void displayText(const String& msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
   void displayText(const __FlashStringHelper* msg, const __FlashStringHelper* title = NULL, bool waitKey = true);
-  void displayText2(const char text[20][LCD_COLUMNS_+1], int len, const __FlashStringHelper* title = NULL);
+  void displayText2(const char** text, uint8_t rows, const __FlashStringHelper* title = NULL);
   
   Button_t readPushButton(void);
   
@@ -102,8 +88,6 @@ class GUI
   
   void scrollBarVert(byte percent, byte column, byte row, byte v_height);
 };
-
-
 
 
 #endif /* _MENU_H_ */

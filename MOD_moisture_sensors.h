@@ -10,8 +10,8 @@ class MOD_moistureSensors_ : public Module
 {
   public:
 
-  int bits[MAX_CHANNELS_];
-  int hum[MAX_CHANNELS_];
+  uint16_t bits[MAX_CHANNELS_];
+  uint16_t hum[MAX_CHANNELS_];
   double volts[MAX_CHANNELS_];
   
   bool state[MAX_CHANNELS_];             // current moistureSensorState of the machine
@@ -36,7 +36,7 @@ class MOD_moistureSensors_ : public Module
   void updateState();
   
   String getState(bool newState = true);
-  void show(int);
+  void show(uint8_t);
 
 };
 

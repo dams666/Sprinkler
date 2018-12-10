@@ -1,7 +1,9 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define MAX_CHANNELS_ 6
+// Si cette valeur est changée, penser à modifier les menus dans menus.h
+#define MAX_CHANNELS_ 4
+
 #define SLEEPING_DURATION_        600000  // 1h
 
 //#define WITH_SERIAL

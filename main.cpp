@@ -18,8 +18,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
-volatile byte                    __programState;
-volatile byte                    __programNextState;
+volatile uint8_t                __programState;
+volatile uint8_t                __programNextState;
 volatile unsigned long          __programStateMillis;
 volatile unsigned long          __nextActionMillis;
 volatile unsigned long          __actionMillis;
@@ -42,7 +42,7 @@ SDLib::File             __fileLogger;
 #endif
 
 // variables locales
-int                    __curChannel;
+uint8_t                __curChannel;
 unsigned long          __nextTimeReadTimeMillis;
 unsigned long          __curMillis;
 // -------------------------------------------------------------------------------------------------
@@ -64,15 +64,15 @@ void writeChannelConfs()
                       MAX_CHANNELS_ * sizeof(chanConf));
 }
 
-int getNbChannelsActivated()
+uint8_t getNbChannelsActivated()
 {
-  int res = 0;
-  for (int thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
-    res += (int)__channelConf[thisPin].active;
+  uint8_t res = 0;
+  for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
+    res += (uint8_t)__channelConf[thisPin].active;
   return res;
 }
 
-void setProgramAction(int state, unsigned int delay_)
+void setProgramAction(uint8_t state, uint8_t delay_)
 {
   __programNextState = state;
   __nextActionMillis = millis() + delay_;
@@ -155,9 +155,9 @@ bool isAlertState()
       __msg = F("Main valve KO!");
     }
     __MOD_moistureSensors->reset();
-
+    
     while( __gui->readPushButton() == BP_NONE)
-    {
+    {      
       digitalWrite(BUZZER_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
       __gui->displayText(__msg, F("ALERT !"), false);
       delay(1000);

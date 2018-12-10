@@ -8,9 +8,7 @@
 // https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads
 // Move any other LCD libraries to another folder or delete them
 // See Library "Docs" folder for possible commands etc.
-#include <LiquidCrystal_I2C.h>
 #include <Eepromutil.h>
-
 #include <Gui.h>
 #include "config.h"
 
@@ -49,18 +47,29 @@ extern MOD_moistureSensors_  * __MOD_moistureSensors;
 extern MOD_waterStats_       * __MOD_waterStats;
 extern MOD_valves_           * __MOD_valves;
 
+extern GUI * __gui;
+
+#define LCD_CLEAR()\
+__gui->lcd->clear();
+
+#define LCD_PRINT(col, line, msg)\
+__gui->lcd->setCursor(col,line);\
+__gui->lcd->print(msg);\
+delay(50);
+
+
 void globalFlowIncPulseCounter();
 
 typedef struct 
 {
   bool active = false;
-  unsigned int  maxMlPerSession;
+  uint16_t  maxMlPerSession;
     
 } chanConf;
 
 extern chanConf __channelConf[MAX_CHANNELS_];
 
-extern int __curChannel; // identifiant courant de la sortie à inspecter
+extern uint8_t __curChannel; // identifiant courant de la sortie à inspecter
 
 void readChannelConfs();
 void writeChannelConfs();
@@ -89,8 +98,8 @@ static const char PRGM_STATE_NAME_ALERT[] PROGMEM = "ALERT";
 const char* const PRGM_STATE_NAMES[] = {PRGM_STATE_NAME_UNDEFINED, PRGM_STATE_NAME_INITIALIZING, PRGM_STATE_NAME_SLEEPING, PRGM_STATE_NAME_ACTIVATING_MOISTURE_SENSORS, PRGM_STATE_NAME_INSPECTING_FOR_CHANGES, PRGM_STATE_NAME_ALERT};
 */
 
-extern volatile byte             __programState;
-extern volatile byte             __programNextState;
+extern volatile uint8_t             __programState;
+extern volatile uint8_t             __programNextState;
 // ON définit un byte pour éviter les problèmes d'interférence avec l'interrupt
 // cf: https://www.arduino.cc/reference/en/language/variables/variable-scope--qualifiers/volatile/
 
@@ -165,9 +174,9 @@ extern action_t array_actions[PRGM_STATE_NB];
 
   void sprinklerAction();
 
-  int getNbChannelsActivated();
+  uint8_t getNbChannelsActivated();
 
-  void setProgramAction(int state, unsigned int delay_ = 100);
+  void setProgramAction(uint8_t state, uint8_t delay_ = 100);
 
   bool isAlertState();
 #endif

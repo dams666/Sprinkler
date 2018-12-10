@@ -55,7 +55,7 @@ bool MOD_moistureSensors_::start()
   return true;
 }
 
-void MOD_moistureSensors_::show(int _row)
+void MOD_moistureSensors_::show(uint8_t _row)
 {
     String str;
     
@@ -89,7 +89,7 @@ String MOD_moistureSensors_::getState(bool newState)
     String str;
     str+= F("-Hum : [");
 
-    for (int ii = 0; ii< MAX_CHANNELS_; ++ii)
+    for (uint8_t ii = 0; ii< MAX_CHANNELS_; ++ii)
     { 
       if (__channelConf[ii].active)
       {
@@ -104,7 +104,7 @@ String MOD_moistureSensors_::getState(bool newState)
 
   void MOD_moistureSensors_::readValues()
   { 
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
+    for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
     {
       bits[thisPin] = 0;
       

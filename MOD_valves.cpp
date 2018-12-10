@@ -5,7 +5,7 @@
 
   MOD_valves_::MOD_valves_()
   { 
-    memset (pins, 0, sizeof(short) * MAX_CHANNELS_);
+    memset (pins, 0, sizeof(uint8_t) * MAX_CHANNELS_);
     
     if (MAX_CHANNELS_>0) pins[0] = VALVE_1_PIN;    
     if (MAX_CHANNELS_>1) pins[1] = VALVE_2_PIN;
@@ -13,13 +13,10 @@
     if (MAX_CHANNELS_>3) pins[3] = VALVE_4_PIN;
     if (MAX_CHANNELS_>4) pins[4] = VALVE_5_PIN;
     if (MAX_CHANNELS_>5) pins[5] = VALVE_6_PIN;
-
-    //fertilizerPin = 39;
    
     pinMode(VALVE_M_PIN, OUTPUT);
-    //pinMode(fertilizerPin, OUTPUT);
     
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+    for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
     {
       pinMode(pins[thisPin], OUTPUT);
     }
@@ -32,7 +29,7 @@
     if (!closeMainValve())
       return false;
 
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+    for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
     {
       state[thisPin] = 0;
       digitalWrite(pins[thisPin], VALVE_OFF); // fermeture de la valve
@@ -40,10 +37,10 @@
     return true;
   }
 
-  int  MOD_valves_::getNbValvesOpened()
+  uint8_t  MOD_valves_::getNbValvesOpened()
   {
-    int res = 0;
-    for (int thisPin = 0; thisPin < MAX_CHANNELS_; thisPin++)
+    uint8_t res = 0;
+    for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
       res +=state[thisPin];
 
     return res;
@@ -122,10 +119,10 @@
     DEBUG_PRINTLN(F(" => CLOSING MAIN VALVE "));
     digitalWrite(VALVE_M_PIN, VALVE_OFF); // fermeture de la vanne principale
 
-    int attempts = 0;
+    uint8_t attempts = 0;
     // on laisse le temps a l'eau de s'écouler, et de faire baisser la pression dans les tuyaux
     while(__MOD_waterStats->calcFlow() == WATER_FLOWING) {
-      attempts++;
+      ++attempts;
       if (attempts > 20)
         return false;
       delay(500);

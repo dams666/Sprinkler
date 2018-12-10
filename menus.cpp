@@ -11,8 +11,12 @@
 #include <DS1307RTC.h>
 #endif
 
+#include <MemoryFree.h>
+#define STAT_MSG_LEN LCD_COLUMNS_ +1
+#include <WaterStatsLogger.h>
+
 /** Affiche le choix de l'utilisateur */
-void doMainMenuAction(byte selectedMenuItem)
+void doMainMenuAction(uint8_t selectedMenuItem)
 { 
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
@@ -42,11 +46,11 @@ void doMainMenuAction(byte selectedMenuItem)
 }
 
 /** Affiche le choix de l'utilisateur */
-void doStatisticsMenuAction(byte selectedMenuItem)
+void doStatisticsMenuAction(uint8_t selectedMenuItem)
 { 
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
-      case 6:
+      case MAX_CHANNELS_:
         __gui->displayMenu(MAIN_MENU);    
         break;
       
@@ -56,7 +60,31 @@ void doStatisticsMenuAction(byte selectedMenuItem)
         LCD_CLEAR();
         __gui->centerText(F("STATISTICS"));
 
-        __MOD_moistureSensors->start();
+        char text [STAT_LOG_SIZE][LCD_COLUMNS_ + 1];
+        //char **text = new char*[STAT_LOG_SIZE];
+        uint8_t len = 0;
+        unsigned long totalMililitres = 0;
+        uint16_t nbWaterings = 0;
+
+        //for (uint8_t i = 0; i< STAT_LOG_SIZE; ++i) {
+        //  text[i] = new char[LCD_COLUMNS_ +1];
+        //}
+
+        //String  str2;
+        //str2 = freeMemory();
+        //__gui->displayText(str2);
+        
+        waterStatsLogger* statsLogger = new waterStatsLogger(sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel);
+          
+        statsLogger->readLogStats((char**)text, len, totalMililitres, nbWaterings);
+        
+        char str[80];
+        sprintf_P(str, PSTR("-Total: %d ml"), totalMililitres);
+        LCD_PRINT(0,3, str);
+
+        __MOD_waterStats->show(2);
+        
+        __MOD_moistureSensors->start();   
         do
         {
             __MOD_moistureSensors->readValues();
@@ -67,23 +95,16 @@ void doStatisticsMenuAction(byte selectedMenuItem)
 
         __MOD_moistureSensors->reset();
         
-        LCD_CLEAR();
-
-        waterStatsChanStorage_ waterStats;
-        char text[20][LCD_COLUMNS_+1];
-        int txtArrLen = 0;
-         
-        __MOD_waterStats->readLogStats(text, txtArrLen, waterStats);
-        
-        __gui->centerText(F("STATISTICS"));
-        __MOD_waterStats->show(1);
-        char str[80];
-        sprintf_P(str, PSTR("-Total: %d ml"), waterStats.totalMililitres);
-        LCD_PRINT(0,2, str);
-        
-        while((__gui->readPushButton()) != BP_OK){delay(200);}
+        //str2 = freeMemory();
+        //__gui->displayText(str2);
           
-        __gui->displayText2(text,txtArrLen, F("LOG ")); 
+        __gui->displayText2((char**)text,len, F("LOG ")); 
+
+        //delete statsLogger;
+        //for (uint8_t i = 0; i< STAT_MSG_LEN; ++i) {
+        //  delete[] text[i];  
+        //}
+        //delete[] text;
         
         __gui->displayMenu(STATISTICS_MENU); 
     }
@@ -91,11 +112,11 @@ void doStatisticsMenuAction(byte selectedMenuItem)
 
 
 /** Affiche le choix de l'utilisateur */
-void doConfigureMenuAction(byte selectedMenuItem)
+void doConfigureMenuAction(uint8_t selectedMenuItem)
 { 
      switch (selectedMenuItem) // See which menu item is selected and execute that correspond function
     {
-      case 6:
+      case MAX_CHANNELS_:
         // Date / Time
         #ifdef WITH_DS1307
         tmElements_t tm;
@@ -116,7 +137,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
         #endif
         
         break;
-      case 7:
+      case MAX_CHANNELS_ + 1:
         // restore defaults    
           /*
           for (int thisChan = 0; thisChan < MAX_CHANNELS_; thisChan++)
@@ -137,7 +158,7 @@ void doConfigureMenuAction(byte selectedMenuItem)
           __gui->displayText(F("Factory settings \nrestored!"), NULL);
                   
         break;
-      case 8:
+      case MAX_CHANNELS_ + 2:
         __gui->displayMenu(MAIN_MENU);    
         break;
       

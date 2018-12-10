@@ -12,7 +12,6 @@
 
 #include <EEPROM.h>
 
-
 //
 // Absolute min and max eeprom addresses.
 // Actual values are hardware-dependent.
