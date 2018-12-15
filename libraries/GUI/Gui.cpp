@@ -362,7 +362,9 @@ uint8_t GUI::displayMenu(const Menu_t &menu)
     case BP_UP: // Bouton haut = choix précédent
  
       /* Si il existe un choix précédent */
-      if(selectedMenuItem > 0) {
+      if(selectedMenuItem == 0) {
+		selectedMenuItem = menu.nbItems - 1;
+	  } else {
  
         /* Passe au choix précédent */
         selectedMenuItem--;

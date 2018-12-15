@@ -105,13 +105,23 @@ void doConfigureMenuAction(uint8_t selectedMenuItem)
         // Date / Time
         #ifdef WITH_DS1307
         tmElements_t tm;
-
-        tm.Year = __gui->displayIntPrompt( F("Year:"), F(""), 2018, 2018, 2050, 1);
-        tm.Month = __gui->displayIntPrompt( F("Month:"), F(""), 0, 1, 12, 1);
-        tm.Day = __gui->displayIntPrompt( F("Day:"), F(""), 0, 1, 31, 1);
         
-        tm.Hour = __gui->displayIntPrompt( F("Hours:"), F("h"), 0, 0, 24, 1);
-        tm.Minute = __gui->displayIntPrompt( F("Minutes:"), F("m"), 0, 0, 60, 1);
+        tm.Year = 2018;
+        tm.Month = 1;
+        tm.Day = 1;
+        
+        tm.Hour = 12;
+        tm.Minute = 0;
+        tm.Second = 0;
+        
+        RTC.read(tm);
+
+        tm.Year = __gui->displayIntPrompt( F("Year:"), F(""), tm.Year, 2018, 2050, 1);
+        tm.Month = __gui->displayIntPrompt( F("Month:"), F(""), tm.Month, 1, 12, 1);
+        tm.Day = __gui->displayIntPrompt( F("Day:"), F(""), tm.Day, 1, 31, 1);
+        
+        tm.Hour = __gui->displayIntPrompt( F("Hours:"), F("h"), tm.Hour, 0, 24, 1);
+        tm.Minute = __gui->displayIntPrompt( F("Minutes:"), F("m"), tm.Minute, 0, 60, 1);
         tm.Second = 0;
         
         RTC.write(tm);

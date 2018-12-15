@@ -155,7 +155,7 @@ static void sleepAction()
       tmElements_t tm;
       if (RTC.read(tm))
       {
-        sprintf_P(str, PSTR("%02d/%02d/%02d  %02d:%02d"), tm.Day, tm.Month, tm.Year, tm.Hour, tm.Minute);
+        sprintf_P(str, PSTR("%02d/%02d/%04d  %02d:%02d"), tm.Day, tm.Month, tm.Year, tm.Hour, tm.Minute);
         LCD_PRINT(0,0,str);
       }
                   
