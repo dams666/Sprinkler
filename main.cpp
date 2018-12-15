@@ -72,7 +72,7 @@ unsigned long                   __nextTimeReadTimeMillis;
 
 void globalFlowIncPulseCounter()
 {
-  __MOD_waterStats->flowIncPulseCounter();
+  __MOD_waterStats->execute();
 }
 
 void readChannelConfs()
@@ -95,20 +95,14 @@ uint8_t getNbChannelsActivated()
 
 void setProgramAction(uint8_t state, uint8_t delay_)
 {
+  if (isAlertState()) return;
+    
   __programNextState = state;
   __nextActionMillis = millis() + delay_;
 }
 
 bool isAlertState()
 {
-  bool _alert = false;
-
-  //désactivation de l'interrupt
-  /*
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    _alert = __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;
-  }*/
-  
   return __programState == PRGM_STATE_ALERT || __programNextState == PRGM_STATE_ALERT;
 }
 
@@ -119,11 +113,8 @@ static void showMenuAction()
   DEBUG_PRINTLN(F("--- SHOW MENU --- "));
   
   switch (__curMenu) // See which menu item is selected and execute that correspond function
-  {
+  {    
     case L_MENU_MAIN :
-      __MOD_valves->reset();
-      __MOD_moistureSensors->reset();
-
       doMainMenuAction(__gui->displayMenu(MAIN_MENU));
       break;
       
@@ -142,7 +133,7 @@ static void sleepAction()
   // entrée dans l'état de sommeil
   if (__programStateMillis == __actionMillis)
   {
-    __MOD_moistureSensors->reset();
+    __MOD_moistureSensors->stop();
     LCD_CLEAR();
     LCD_PRINT(0,3,F("SLEEPING..."));
   }
@@ -184,10 +175,10 @@ static void sleepAction()
   
 static void alertAction()
 {
-    if (!__MOD_valves->reset()) {
+    if (!__MOD_valves->stop()) {
       __msg = F("Main valve KO!");
     }
-    __MOD_moistureSensors->reset();
+    __MOD_moistureSensors->stop();
     
     while( __gui->readPushButton() == BP_NONE)
     {      
@@ -206,14 +197,14 @@ static void alertAction()
 static void activateMoistSensAction()
 { 
   DEBUG_PRINTLN(F("--- ACTIVATING MOISTURE SENSORS ---"));
-  __MOD_moistureSensors->reset();
+  __MOD_moistureSensors->start();
 
   setProgramAction(PRGM_STATE_READING_MOISTURE_SENSORS, 100);
 }
 
 static void readMoistSensAction()
 {
-  __MOD_moistureSensors->readValues();    
+  __MOD_moistureSensors->execute();    
   setProgramAction(PRGM_STATE_INSPECTING_FOR_CHANGES); 
 }
 
@@ -221,19 +212,16 @@ static void inspectForChangesAction()
 {          
   if (__channelConf[__curChannel].active)
   {
-    // lancement / fermeture des vannes
-    if ( __MOD_moistureSensors->hasStateChanged()) 
+    /**
+     * 2 cas de déclenchement:
+     * 1) Lancement / fermeture des vannes
+     * 2) Détection de reprise suite à l'extinction d'une autre vanne
+     */
+    if ( __MOD_moistureSensors->hasStateChanged() || __MOD_valves->hasStateChanged()) 
     {
-      __MOD_valves->start();
-      
-    // détection de reprise suite à l'extinction d'une autre vanne
-    } else if (__MOD_valves->state[__curChannel] != __MOD_moistureSensors->state[__curChannel]) 
-    {
-      __MOD_valves->start();
+      __MOD_valves->execute();
     }
     
-    __MOD_moistureSensors->updateState();
-
     // l'eau est en train de couler, affichage des statistiques de conso
     if (__MOD_valves->state[__curChannel]) 
     {

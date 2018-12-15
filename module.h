@@ -9,8 +9,9 @@ class Module
   
   virtual ~Module(){}
     
-  virtual bool reset() = 0;
+  virtual bool stop() = 0;
   virtual bool start() = 0;
+  virtual bool execute() = 0;
 };
 
 

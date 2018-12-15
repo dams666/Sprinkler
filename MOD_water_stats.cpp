@@ -5,33 +5,6 @@
 //#define LIBCALL_ENABLEINTERRUPT
 #include <EnableInterrupt.h>
 #include <WaterStatsLogger.h>
-  /*
-  Flow sensor Insterrupt Service Routine
-   */
-  void MOD_waterStats_::flowIncPulseCounter()
-  { 
-    // Increment the pulse counter
-    ++flowPulseCount;
-    
-    if (isAlertState() || __MOD_valves->stateMain)
-      return;
-      
-    if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
-    {
-       lastIncoherentPulseCountTime = millis();
-       incoherentPulseCount = 0;
-    }
-      
-    ++incoherentPulseCount;
-      
-    if (incoherentPulseCount > 40)
-    {
-      __msg = F("water is flowing but\nvalves are closed!"); 
-      setProgramAction(PRGM_STATE_ALERT);
-    }    
-
-  }
-
 
 MOD_waterStats_::MOD_waterStats_() 
 {   
@@ -48,7 +21,7 @@ MOD_waterStats_::MOD_waterStats_()
 
     pinMode(WATER_FLOW_PIN, INPUT_PULLUP);
         
-    reset();
+    stop();
        
     // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
     // Configured to trigger on a FALLING state change (transition from HIGH
@@ -57,7 +30,7 @@ MOD_waterStats_::MOD_waterStats_()
 }
 
 
-bool MOD_waterStats_::reset() 
+bool MOD_waterStats_::stop() 
 {
   waterFlow = WATER_STOPPED;
     
@@ -85,12 +58,39 @@ bool MOD_waterStats_::start()
   return true;
 }
 
-void MOD_waterStats_::show(uint8_t _row)
+  /*
+  Flow sensor Insterrupt Service Routine
+   */
+  bool MOD_waterStats_::execute()
+  { 
+    // Increment the pulse counter
+    ++flowPulseCount;
+    
+    if (isAlertState() || __MOD_valves->stateMain)
+      return;
+      
+    if (lastIncoherentPulseCountTime == 0 || ((millis() - lastIncoherentPulseCountTime) > 60000))
+    {
+       lastIncoherentPulseCountTime = millis();
+       incoherentPulseCount = 0;
+    }
+      
+    ++incoherentPulseCount;
+      
+    if (incoherentPulseCount > 40)
+    {
+      __msg = F("water is flowing but\nvalves are closed!"); 
+      setProgramAction(PRGM_STATE_ALERT);
+    }    
+    return true;
+  }
+
+
+
+
+void MOD_waterStats_::show(char* str)
 {  
-  char str[80];
-  
   sprintf_P(str,PSTR("-Water used: %d ml"), totalMililitresSession[__curChannel]);
-  LCD_PRINT(0,_row, str);
 }
 
 void MOD_waterStats_::printFlow() 

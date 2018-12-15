@@ -27,16 +27,15 @@ class MOD_moistureSensors_ : public Module
   
   MOD_moistureSensors_();
 
-  bool reset();
+  bool stop();
   bool start();
   
-  void readValues();
+  bool execute();
 
   bool hasStateChanged();
-  void updateState();
   
-  String getState(bool newState = true);
-  void show(uint8_t);
+  //String getState(bool newState = true);
+  void show(char*);
 
 };
 

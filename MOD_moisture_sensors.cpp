@@ -35,11 +35,11 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   pinMode(MOIST_SENS_PIN, OUTPUT);
 
   nextReadMillis = 0;
-  reset();
+  stop();
 }
 
 
-bool MOD_moistureSensors_::reset()
+bool MOD_moistureSensors_::stop()
 {
   digitalWrite(MOIST_SENS_PIN, LOW);
   delay(50);
@@ -55,35 +55,17 @@ bool MOD_moistureSensors_::start()
   return true;
 }
 
-void MOD_moistureSensors_::show(uint8_t _row)
+void MOD_moistureSensors_::show(char* str)
 {
-    String str;
-    
-    str = F("-Hum : ");
-    
-    if (true) //__channelConf[__curChannel].active)
-    {
-       str += hum[__curChannel]; 
-       str += F("% (");
-       str += volts[__curChannel]; 
-       str += F("V)   ");
-    } else {
-        str += F("- ");
-    }
-    
-    LCD_PRINT(0,_row, str);    
-  }
+  sprintf_P(str, PSTR("-Hum : %d%% (%d V)"), hum[__curChannel], volts[__curChannel]); 
+}
 
 bool MOD_moistureSensors_::hasStateChanged()
 {
   return state[__curChannel] != prevState[__curChannel];
 }
 
-void MOD_moistureSensors_::updateState()
-{
-  prevState[__curChannel] = state[__curChannel];
-}
-
+/*
 String MOD_moistureSensors_::getState(bool newState)
 {
     String str;
@@ -101,8 +83,9 @@ String MOD_moistureSensors_::getState(bool newState)
     str+= F("]");
     return str;
   }
+*/
 
-  void MOD_moistureSensors_::readValues()
+  bool MOD_moistureSensors_::execute()
   { 
     for (uint8_t thisPin = 0; thisPin < MAX_CHANNELS_; ++thisPin)
     {
@@ -114,6 +97,7 @@ String MOD_moistureSensors_::getState(bool newState)
       volts[thisPin]  = bits[thisPin] * 0.000125;
       hum[thisPin]    = map(bits[thisPin],0,29200,0,100);
 
+      prevState[thisPin] = state[thisPin];
       state[thisPin] = hum[thisPin] < 80;
     }
 
@@ -128,7 +112,7 @@ String MOD_moistureSensors_::getState(bool newState)
       // if the file opened okay, write to it:
       if (__fileLogger)
       {
-        __fileLogger.print(readTime());
+        //__fileLogger.print(readTime());
         __fileLogger.print(" ");
         __fileLogger.print(volts[0]);
         __fileLogger.print(" ");
@@ -142,5 +126,6 @@ String MOD_moistureSensors_::getState(bool newState)
       }      
     }
     #endif
+    return true;
   }
   

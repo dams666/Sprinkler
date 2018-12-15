@@ -28,9 +28,9 @@ void doMainMenuAction(uint8_t selectedMenuItem)
           setProgramAction(PRGM_STATE_SHOW_MENU);
           
         } else {
-          __MOD_moistureSensors->reset();
-          __MOD_waterStats->reset();
-          __MOD_valves->reset();
+          __MOD_moistureSensors->stop();
+          __MOD_waterStats->stop();
+          __MOD_valves->stop();
 
           setProgramAction(PRGM_STATE_ACTIVATING_MOISTURE_SENSORS);
         }
@@ -64,29 +64,29 @@ void doStatisticsMenuAction(uint8_t selectedMenuItem)
 
         char text [STAT_LOG_SIZE][LCD_COLUMNS_ + 1];
         uint8_t len = 0;
-        unsigned long totalMililitres = 0;
-        uint16_t nbWaterings = 0;
         
-        waterStatsLogger* statsLogger = new waterStatsLogger(sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel);
+        waterStatsLogger statsLogger(sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel);
           
-        statsLogger->readLogStats((char**)text, len, totalMililitres, nbWaterings);
+        statsLogger.readLogStats((char**)text, len);
         
         char str[80];
-        sprintf_P(str, PSTR("-Total: %d ml"), totalMililitres);
+        statsLogger.showTotalL(str);
         LCD_PRINT(0,3, str);
 
-        __MOD_waterStats->show(2);
+        __MOD_waterStats->show(str);
+        LCD_PRINT(0,2, str);
         
         __MOD_moistureSensors->start();   
         do
         {
-            __MOD_moistureSensors->readValues();
-            __MOD_moistureSensors->show(1);
+            __MOD_moistureSensors->execute();
+            __MOD_moistureSensors->show(str);
+            LCD_PRINT(0,1, str);
 
-          delay(400);
+          delay(500);
         } while((__gui->readPushButton()) != BP_OK);
 
-        __MOD_moistureSensors->reset();
+        __MOD_moistureSensors->stop();
           
         __gui->displayText2((char**)text,len, F("LOG ")); 
         

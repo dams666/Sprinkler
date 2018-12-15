@@ -47,8 +47,10 @@ delay(50);
 
 extern volatile uint8_t             __programState;
 extern volatile uint8_t             __programNextState;
-// ON définit un byte pour éviter les problèmes d'interférence avec l'interrupt
-// cf: https://www.arduino.cc/reference/en/language/variables/variable-scope--qualifiers/volatile/
+/* 
+ *  ON définit un byte pour éviter les problèmes d'interférence avec l'interrupt
+ *  cf: https://www.arduino.cc/reference/en/language/variables/variable-scope--qualifiers/volatile/
+*/
 
 extern volatile unsigned long   __programStateMillis;
 extern volatile unsigned long   __actionMillis;

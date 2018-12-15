@@ -50,8 +50,10 @@ class waterStatsLogger
    */
   void saveSessionStats(uint16_t totalMililitres);
 
-  void readLogStats(char** text, uint8_t& len, unsigned long& totalMililitres, uint16_t&  nbWaterings);
+  void readLogStats(char** text, uint8_t& len);
 
+  void showTotalL(char*);
+  
   void clearStats();
 };
 

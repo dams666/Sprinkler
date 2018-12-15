@@ -40,21 +40,22 @@ class MOD_waterStats_ : public Module
 
   public: 
     
-/*
-  Flow sensor Insterrupt Service Routine
-*/
-  void flowIncPulseCounter();
-
   MOD_waterStats_();
-
-  bool reset();
 
   /** 
    *  Démarrage de la session de statistiques
    */
   bool start();
   
-  void show(uint8_t row);
+  bool stop();
+  
+  /*
+  Flow sensor Insterrupt Service Routine
+  */
+  bool execute();
+
+  
+  void show(char*);
   void printFlow();
 
   void saveSessionStats();

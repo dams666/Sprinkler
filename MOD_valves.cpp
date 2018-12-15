@@ -21,10 +21,10 @@
       pinMode(pins[thisPin], OUTPUT);
     }
 
-    reset();
+    stop();
   }
 
-  bool MOD_valves_::reset()
+  bool MOD_valves_::stop()
   {
     if (!closeMainValve())
       return false;
@@ -46,7 +46,7 @@
     return res;
   }
   
-  bool MOD_valves_::start()
+  bool MOD_valves_::execute()
   {    
     if (!__channelConf[__curChannel].active)
       return false;
@@ -100,6 +100,12 @@
     }
     return true;
   }  
+
+  bool MOD_valves_::hasStateChanged()
+  {
+    return state[__curChannel] != __MOD_moistureSensors->state[__curChannel];
+  }
+  
   bool MOD_valves_::openMainValve()
   {
      if (!__channelConf[__curChannel].active)

@@ -29,19 +29,12 @@ void waterStatsLogger::saveSessionStats(uint16_t totalMililitres)
   
   waterStats.totalMililitres += totalMililitres;
   ++waterStats.nbWaterings;
-  
-  // enregistrement des stats
-  /*
-  eeprom_write_bytes( sizeof(chanConf) * MAX_CHANNELS_ + sizeof(waterStatsChanStorage_) * __curChannel,
-                      (const byte*)(&waterStats),
-                      sizeof(waterStatsChanStorage_)); 
-*/
 
   eeprom_write_bytes(startAddr, (const byte*)(&this->waterStats), sizeof(waterStatsChanStorage_)); 
 }
 
 
-void waterStatsLogger::readLogStats(char** text, uint8_t& len, unsigned long& totalMililitres, uint16_t&  nbWaterings)
+void waterStatsLogger::readLogStats(char** text, uint8_t& len)
 {
   tmElements_t tm;
   uint8_t i;
@@ -52,9 +45,6 @@ void waterStatsLogger::readLogStats(char** text, uint8_t& len, unsigned long& to
   
   // lecture des stats
   eeprom_read_bytes( startAddr,(byte*)(&this->waterStats), sizeof(waterStatsChanStorage_));
-  
-  nbWaterings = waterStats.nbWaterings;
-  totalMililitres = waterStats.totalMililitres;
 
   if (waterStats.nbWaterings <= STAT_LOG_SIZE) // pas de rotation de log
   {
@@ -75,6 +65,11 @@ void waterStatsLogger::readLogStats(char** text, uint8_t& len, unsigned long& to
     }
   }
 
+}
+
+void waterStatsLogger::showTotalL(char* str)
+{
+	sprintf_P(str, PSTR("-Total: %d.%d L"), (int)(waterStats.totalMililitres / 1000),  waterStats.totalMililitres - int(waterStats.totalMililitres) * 10);
 }
 
 void waterStatsLogger::clearStats()

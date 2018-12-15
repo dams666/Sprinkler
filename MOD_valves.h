@@ -24,8 +24,14 @@ class MOD_valves_ : public Module
   
   MOD_valves_();
 
-  bool reset();
-  bool start();
+  bool stop();
+  bool start() {return true;}
+  bool execute();
+
+  /**
+   * Détection de reprise suite à l'extinction d'une autre vanne
+   */
+  bool hasStateChanged();
   
   uint8_t  getNbValvesOpened();
 
