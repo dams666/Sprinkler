@@ -1,32 +1,21 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef __MODULE_CONFIG_H__
+#define __MODULE_CONFIG_H__
 
 // Si cette valeur est changée, penser à modifier les menus dans menus.h
 #define MAX_CHANNELS_ 4
 
-#define SLEEPING_DURATION_        600000  // 1h
-
 //#define WITH_SERIAL
 #undef WITH_SERIAL
- #define WITH_DS1307
-//#undef WITH_DS1307
-//#define WITH_LOGGER
-#undef WITH_LOGGER
-
-#define BUZZER_PIN LED_BUILTIN
-
-//------------------------------------
-// GUI
-//------------------------------------
-
-#define LCD_I2C_ADDR 0x3F
-#define RC_PIN 5
 
 //------------------------------------
 // MOISTURE SENSORS MODULE
 //------------------------------------
 
 #define MOIST_SENS_PIN 3
+#define ADS1115_I2C_ADDR 0x48
+
+#define WITH_SD_CARD
+//#undef WITH_SD_CARD
 
 //------------------------------------
 // VALVES MODULE

@@ -185,7 +185,7 @@ int GUI::displayIntPrompt(const __FlashStringHelper* msg, const __FlashStringHel
     lcd->print(txt);
     
     /* Attend l'appui sur un bouton */
-    while((buttonPressed = readPushButton()) == BP_NONE){delay(100);}
+    while((buttonPressed = readPushButton()) == BP_NONE){delay(50);}
     
     /* Gére l'appui sur le bouton */
     switch(buttonPressed)
@@ -274,7 +274,7 @@ bool GUI::displayYNPrompt(const __FlashStringHelper * msg, bool dftYes)
     }
     
     /* Attend l'appui sur un bouton */
-    while((buttonPressed = readPushButton()) == BP_NONE){delay(100);}
+    while((buttonPressed = readPushButton()) == BP_NONE){delay(50);}
    
     /* Gére l'appui sur le bouton */
     switch(buttonPressed)
@@ -355,7 +355,7 @@ uint8_t GUI::displayMenu(const Menu_t &menu)
     }
     
     /* Attend l'appui sur un bouton */
-    while((buttonPressed = readPushButton()) == BP_NONE){delay(100);}
+    while((buttonPressed = readPushButton()) == BP_NONE){delay(50);}
  
     /* Gére l'appui sur le bouton */
     switch(buttonPressed) {
@@ -374,8 +374,9 @@ uint8_t GUI::displayMenu(const Menu_t &menu)
     case BP_DOWN: // Bouton bas = choix suivant
  
       /* Si il existe un choix suivant */
-      if(selectedMenuItem < (menu.nbItems - 1)) {
- 
+      if(selectedMenuItem == menu.nbItems - 1) {
+		selectedMenuItem = 0;
+	  } else {
         /* Passe au choix suivant */
         selectedMenuItem++;
       }
@@ -526,7 +527,7 @@ void GUI::displayText2(const char** text, uint8_t rows, const __FlashStringHelpe
       lcd->print( msg );
     }
     /* Attend l'appui sur un bouton */
-    while((buttonPressed = readPushButton()) == BP_NONE){delay(100);}
+    while((buttonPressed = readPushButton()) == BP_NONE){delay(50);}
  
     /* Gére l'appui sur le bouton */
     switch(buttonPressed) {
@@ -573,7 +574,7 @@ void GUI::displayText(const __FlashStringHelper* msg, const __FlashStringHelper*
   {
     /* Attend l'appui sur le bouton gauche ou SELECT */
     do {
-    buttonPressed = readPushButton();
+    buttonPressed = readPushButton();delay(50);
     } 
     while(buttonPressed != BP_LEFT && buttonPressed != BP_OK);
   }

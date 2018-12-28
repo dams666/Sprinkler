@@ -2,9 +2,8 @@
 #define __VALVES_H__
 
 #include <arduino.h> 
-#include "module.h"
-#include "config.h"
-
+#include <module.h>
+#include <ModuleConfig.h>
 
 /*
  * Module chapeau. Il déclence les autres modules 

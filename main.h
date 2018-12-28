@@ -10,7 +10,7 @@
 // See Library "Docs" folder for possible commands etc.
 #include <Eepromutil.h>
 #include <Gui.h>
-#include "config.h"
+#include <ModuleConfig.h>
 
 #define VALVE_OFF LOW
 #define VALVE_ON HIGH
@@ -29,6 +29,19 @@ delay(50);
 #else
 #define DEBUG_PRINTLN(msg) 
 #endif
+
+
+#define BUZZER_PIN LED_BUILTIN
+#define SLEEPING_DURATION_        600000  // 1h
+#define WITH_DS1307
+//#undef WITH_DS1307
+
+//------------------------------------
+// GUI
+//------------------------------------
+
+#define LCD_I2C_ADDR 0x3F
+#define RC_PIN 5
 
 //-------------------------------------------------------------------------------------------------------------
 // VARIABLES DE LA MACHINE A ETAT
@@ -164,14 +177,6 @@ __gui->lcd->clear();
 __gui->lcd->setCursor(col,line);\
 __gui->lcd->print(msg);\
 delay(50);
-
-// Logger
-#ifdef WITH_LOGGER
-namespace SDLib {
-  class File;
-};
-extern SDLib::File           __fileLogger;
-#endif
 
 void globalFlowIncPulseCounter();
 

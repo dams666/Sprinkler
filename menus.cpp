@@ -80,7 +80,7 @@ void doStatisticsMenuAction(uint8_t selectedMenuItem)
         do
         {
             __MOD_moistureSensors->execute();
-            __MOD_moistureSensors->show(str);
+            __MOD_moistureSensors->show(__curChannel, str);
             LCD_PRINT(0,1, str);
 
           delay(500);

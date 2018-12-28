@@ -53,10 +53,6 @@ MOD_valves_ *                   __MOD_valves;
 // GUI
 GUI *                           __gui;
 
-// Logger
-#ifdef WITH_LOGGER
-SDLib::File                     __fileLogger;
-#endif
 
 // menu à afficher
 uint8_t                         __curMenu;
@@ -217,7 +213,7 @@ static void inspectForChangesAction()
      * 1) Lancement / fermeture des vannes
      * 2) Détection de reprise suite à l'extinction d'une autre vanne
      */
-    if ( __MOD_moistureSensors->hasStateChanged() || __MOD_valves->hasStateChanged()) 
+    if ( __MOD_moistureSensors->hasStateChanged(__curChannel) || __MOD_valves->hasStateChanged()) 
     {
       __MOD_valves->execute();
     }
@@ -243,8 +239,10 @@ static void inspectForChangesAction()
           return;
         break;
         case WATER_FLOWING:
-          __MOD_moistureSensors->show(1);
-          __MOD_waterStats->printFlow();
+          char str[80];
+          __MOD_moistureSensors->show(__curChannel,str);
+          LCD_PRINT(1,1,str);
+          __MOD_waterStats->printFlow(str);
         break;
       }
     }

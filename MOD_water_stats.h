@@ -2,8 +2,8 @@
 #define __WATER_STATS_H__
 
 #include <Arduino.h>
-#include "module.h"
-#include "config.h"
+#include <module.h>
+#include <ModuleConfig.h>
 
 enum  waterFlow_ {
   WATER_FLOWING,
@@ -56,7 +56,7 @@ class MOD_waterStats_ : public Module
 
   
   void show(char*);
-  void printFlow();
+  void printFlow(char*);
 
   void saveSessionStats();
   

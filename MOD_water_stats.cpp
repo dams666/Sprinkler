@@ -93,9 +93,8 @@ void MOD_waterStats_::show(char* str)
   sprintf_P(str,PSTR("-Water used: %d ml"), totalMililitresSession[__curChannel]);
 }
 
-void MOD_waterStats_::printFlow() 
+void MOD_waterStats_::printFlow(char* str) 
 {
-  char str[80];
   unsigned int frac;
 
   frac = (flowRate[__curChannel] - int(flowRate[__curChannel])) * 10;

@@ -1,9 +1,9 @@
 #include "MOD_moisture_sensors.h"
-#include "main.h"
 
 #include <Adafruit_ADS1015.h>
+#include <TimeLib.h>
 
-#ifdef WITH_LOGGER
+#if defined( WITH_SD_CARD )
 #include <SPI.h>
 #include <SD.h>
 #endif
@@ -16,9 +16,9 @@ MOD_moistureSensors_::MOD_moistureSensors_()
   
   memset (state, 0, sizeof(bool) * MAX_CHANNELS_);
   memset (prevState, 0, sizeof(bool) * MAX_CHANNELS_);
-
-  ads = new Adafruit_ADS1115 (0x4A);  /* Use this for the 16-bit version */
-
+	
+  ads = new Adafruit_ADS1115 (ADS1115_I2C_ADDR);  /* Use this for the 16-bit version */
+		
   // The ADC input range (or gain) can be changed via the following
   // functions, but be careful never to exceed VDD +0.3V max, or to
   // exceed the upper and lower limits if you adjust the input range!
@@ -34,10 +34,19 @@ MOD_moistureSensors_::MOD_moistureSensors_()
 
   pinMode(MOIST_SENS_PIN, OUTPUT);
 
+  #if defined( WITH_SD_CARD )
+  SD.begin(4);
+  #endif
+  
   nextReadMillis = 0;
   stop();
 }
 
+MOD_moistureSensors_::~MOD_moistureSensors_()
+{
+	stop();
+	delete ads;
+}
 
 bool MOD_moistureSensors_::stop()
 {
@@ -55,14 +64,19 @@ bool MOD_moistureSensors_::start()
   return true;
 }
 
-void MOD_moistureSensors_::show(char* str)
+void MOD_moistureSensors_::show(uint8_t channel, char* str)
 {
-  sprintf_P(str, PSTR("-Hum : %d%% (%d V)"), hum[__curChannel], volts[__curChannel]); 
+  sprintf_P(str, PSTR("-Hum : %d%% (%d V)"), hum[channel], volts[channel]); 
 }
 
-bool MOD_moistureSensors_::hasStateChanged()
+bool MOD_moistureSensors_::getState(uint8_t channel) const
 {
-  return state[__curChannel] != prevState[__curChannel];
+  return state[channel];
+}
+
+bool MOD_moistureSensors_::hasStateChanged(uint8_t channel) const 
+{
+  return state[channel] != prevState[channel];
 }
 
 /*
@@ -101,29 +115,28 @@ String MOD_moistureSensors_::getState(bool newState)
       state[thisPin] = hum[thisPin] < 80;
     }
 
-    #ifdef WITH_LOGGER
-    // ecriture dans le fichier de log
-    if (millis() >= nextReadMillis)
+	#if defined ( WITH_SERIAL ) || defined ( WITH_SD_CARD )
+	// ecriture dans le fichier de log
+    //if (millis() >= nextReadMillis)
     {
-      nextReadMillis = millis() + 60000 * 5;
+		char log[150];
+		long val  = millis() / 1000;
+		sprintf_P(log, PSTR("%d %02d:%02d %d %d %d %d"), elapsedDays(val), numberOfHours(val), numberOfMinutes(val), (int)(volts[0] * 100.0f), (int)(volts[1] * 100.0f), (int)(volts[2] * 100.0f), (int)(volts[3] * 100.0f));
+      
+		#if defined ( WITH_SERIAL )
+		Serial.println(log);
+		#endif
 
-      __fileLogger = SD.open("logger.txt", FILE_WRITE);
+		#if defined( WITH_SD_CARD )
+		//nextReadMillis = millis() + 60000 * 5;
+		fileLogger = SD.open("logger.txt", FILE_WRITE);
 
-      // if the file opened okay, write to it:
-      if (__fileLogger)
-      {
-        //__fileLogger.print(readTime());
-        __fileLogger.print(" ");
-        __fileLogger.print(volts[0]);
-        __fileLogger.print(" ");
-        __fileLogger.print(volts[1]);
-        __fileLogger.print(" ");
-        __fileLogger.print(volts[2]);
-        __fileLogger.print(" ");
-        __fileLogger.println(volts[3]);
-        
-        __fileLogger.close();
-      }      
+		if (fileLogger)
+		{
+			fileLogger.println(log);
+			fileLogger.close();
+		}      
+		#endif
     }
     #endif
     return true;

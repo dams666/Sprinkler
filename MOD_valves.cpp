@@ -51,7 +51,7 @@
     if (!__channelConf[__curChannel].active)
       return false;
              
-    if (__MOD_moistureSensors->state[__curChannel]) // activation du moisture sensor
+    if (__MOD_moistureSensors->getState(__curChannel)) // activation du moisture sensor
     {
       if (getNbValvesOpened() < MAX_VALVES_OPENED && !state[__curChannel] )
       {
@@ -103,7 +103,7 @@
 
   bool MOD_valves_::hasStateChanged()
   {
-    return state[__curChannel] != __MOD_moistureSensors->state[__curChannel];
+    return state[__curChannel] != __MOD_moistureSensors->getState(__curChannel);
   }
   
   bool MOD_valves_::openMainValve()
