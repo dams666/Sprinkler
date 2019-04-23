@@ -11,9 +11,6 @@
 #include <Eepromutil.h>
 #include <Gui.h>
 #include <ModuleConfig.h>
-
-#define VALVE_OFF LOW
-#define VALVE_ON HIGH
   
 #ifdef WITH_SERIAL
 #define DEBUG_PRINT(msg)\

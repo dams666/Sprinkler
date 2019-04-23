@@ -2,7 +2,7 @@
 
 void doMainMenuAction(byte selectedMenuItem);
 
-GUI *                   __gui;
+GUI * __gui;
 
 static const char GEN_MENU_ITEMS_CHAN_1[] PROGMEM = "Menu 1";
 static const char GEN_MENU_ITEMS_CHAN_2[] PROGMEM = "Menu 2";

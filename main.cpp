@@ -139,6 +139,7 @@ static void sleepAction()
   if ((button = __gui->readPushButton()) != BP_NONE)
   {
     setProgramAction(PRGM_STATE_SHOW_MENU);
+    __nextTimeReadTimeMillis = 0;
     return;
   }
 
@@ -208,15 +209,7 @@ static void inspectForChangesAction()
 {          
   if (__channelConf[__curChannel].active)
   {
-    /**
-     * 2 cas de déclenchement:
-     * 1) Lancement / fermeture des vannes
-     * 2) Détection de reprise suite à l'extinction d'une autre vanne
-     */
-    if ( __MOD_moistureSensors->hasStateChanged(__curChannel) || __MOD_valves->hasStateChanged()) 
-    {
       __MOD_valves->execute();
-    }
     
     // l'eau est en train de couler, affichage des statistiques de conso
     if (__MOD_valves->state[__curChannel]) 
@@ -346,7 +339,7 @@ void sprinklerInit()
     {
       if (RTC.chipPresent())
       {
-        doConfigureMenuAction(__gui->displayMenu(CONFIGURE_MENU));
+        configureDateTime();
         
       } else {
   

@@ -48,8 +48,15 @@
   
   bool MOD_valves_::execute()
   {    
-    if (!__channelConf[__curChannel].active)
+     /**
+     * 2 cas de déclenchement:
+     * 1) Lancement / fermeture des vannes
+     * 2) Détection de reprise suite à l'extinction d'une autre vanne
+     */
+    if ( ! (__MOD_moistureSensors->hasStateChanged(__curChannel) || hasStateChanged()))
+    {
       return false;
+    }
              
     if (__MOD_moistureSensors->getState(__curChannel)) // activation du moisture sensor
     {
